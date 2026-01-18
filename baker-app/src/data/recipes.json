@@ -1,0 +1,97 @@
+{
+  "recipes": [
+    {
+      "id": "basic-bread",
+      "name": "Basic Bread",
+      "baseFlourWeight": 500,
+      "hydrationHint": "65% hydration",
+      "ingredients": [
+        {
+          "id": "flour",
+          "name": "Bread Flour",
+          "percentage": 100,
+          "type": "flour"
+        },
+        {
+          "id": "water",
+          "name": "Water",
+          "percentage": 65,
+          "type": "liquid"
+        },
+        {
+          "id": "salt",
+          "name": "Salt",
+          "percentage": 2,
+          "type": "seasoning"
+        },
+        {
+          "id": "yeast",
+          "name": "Active Dry Yeast",
+          "percentage": 2,
+          "type": "leavening"
+        }
+      ],
+      "steps": [
+        {
+          "id": "mix",
+          "title": "Mix Ingredients",
+          "description": "Combine flour, water, yeast, and salt in a large bowl. Mix until no dry flour remains.",
+          "technique": "mixing",
+          "activeMinutes": 5,
+          "passiveMinutes": 0,
+          "dependencies": []
+        },
+        {
+          "id": "knead",
+          "title": "Knead Dough",
+          "description": "Knead the dough on a lightly floured surface for 10 minutes until smooth and elastic.",
+          "technique": "kneading",
+          "activeMinutes": 10,
+          "passiveMinutes": 0,
+          "dependencies": ["mix"]
+        },
+        {
+          "id": "bulk-ferment",
+          "title": "Bulk Fermentation",
+          "description": "Place dough in a lightly oiled bowl, cover, and let rise until doubled in size.",
+          "technique": "proofing",
+          "activeMinutes": 2,
+          "passiveMinutes": 90,
+          "temperature": "75°F ambient",
+          "dependencies": ["knead"]
+        },
+        {
+          "id": "shape",
+          "title": "Shape Loaf",
+          "description": "Gently deflate dough, shape into a loaf, and place in a greased 9x5 pan.",
+          "technique": "shaping",
+          "activeMinutes": 5,
+          "passiveMinutes": 0,
+          "dependencies": ["bulk-ferment"]
+        },
+        {
+          "id": "final-proof",
+          "title": "Final Proof",
+          "description": "Cover and let rise until dough is about 1 inch above the rim of the pan.",
+          "technique": "proofing",
+          "activeMinutes": 1,
+          "passiveMinutes": 45,
+          "temperature": "75°F ambient",
+          "dependencies": ["shape"]
+        },
+        {
+          "id": "bake",
+          "title": "Bake",
+          "description": "Bake in preheated oven until golden brown and internal temperature reaches 190°F.",
+          "technique": "baking",
+          "activeMinutes": 5,
+          "passiveMinutes": 35,
+          "temperature": "375°F oven",
+          "dependencies": ["final-proof"]
+        }
+      ],
+      "notes": "This is a simple, reliable recipe perfect for beginners.",
+      "source": "Traditional"
+    }
+  ]
+}
