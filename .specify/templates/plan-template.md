@@ -31,7 +31,14 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- Uses React for all UI code.
+- Uses Fluent UI React v9 for UI components/styling (no other UI kits).
+- Designs mobile-first interactions (touch + small screens) and includes
+  accessibility considerations.
+- Introduces TypeScript `interface`s for new dependency boundaries.
+- Includes unit tests for all new/changed methods.
+- Keeps domain logic isolated from IO; side effects behind interfaces.
+- Keeps recipe data portable/versioned for future Python backend and export flow.
 
 ## Project Structure
 

@@ -32,6 +32,14 @@
 - [ ] CHK005 Item with specific criteria
 - [ ] CHK006 Final item in this category
 
+## Constitution Compliance
+
+- [ ] CHK007 Uses React + Fluent UI React v9 only
+- [ ] CHK008 Mobile-first UX reviewed (touch + small screens)
+- [ ] CHK009 Accessibility basics verified (labels/roles/keyboard where applicable)
+- [ ] CHK010 Interfaces added for new dependency seams
+- [ ] CHK011 Unit tests added for all new/changed methods
+
 ## Notes
 
 - Check items off as completed: `[x]`

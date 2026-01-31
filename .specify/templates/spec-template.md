@@ -90,6 +90,15 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
+### Engineering Constraints *(mandatory)*
+
+- Implementation MUST be React-based and use Fluent UI React v9 for UI.
+- New/changed methods/functions MUST have unit tests.
+- New dependency seams (storage, APIs, time, etc.) MUST be expressed as
+  TypeScript `interface`s.
+- If the feature touches recipe data, formats MUST be portable and versioned to
+  support a future Python backend and/or Python export tooling.
+
 *Example of marking unclear requirements:*
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]

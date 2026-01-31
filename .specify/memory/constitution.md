@@ -1,50 +1,89 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+
+- Version change: N/A (template) 6 0.1.0
+- Modified principles: N/A (template placeholders 6 concrete principles)
+- Added sections: Technology & Platform Constraints; Development Workflow & Quality Gates
+- Removed sections: None
+- Templates requiring updates:
+	- 9 `.specify/templates/plan-template.md`
+	- 9 `.specify/templates/spec-template.md`
+	- 9 `.specify/templates/tasks-template.md`
+	- 9 `.specify/templates/checklist-template.md`
+	- 9 `.specify/templates/agent-file-template.md`
+- Follow-up TODOs:
+	- TODO(RATIFICATION_DATE): confirm original adoption date (YYYY-MM-DD)
+-->
+
+# Baker Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### React + Fluent UI v9 Only
+Baker is a React app and MUST use Fluent UI React v9 for UI components and styling.
+New UI MUST be built from Fluent v9 primitives/components; do not introduce other UI
+component libraries.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### Mobile-First UX + Accessibility
+All UX decisions MUST optimize for mobile screens and touch interaction first.
+Accessibility is required: components MUST have appropriate labels/roles and be
+usable with keyboard and screen readers where applicable.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### Tests + Interfaces (NON-NEGOTIABLE)
+When making changes to the codebase:
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+- Every new or modified method/function MUST have unit tests.
+- Every non-trivial dependency boundary MUST be represented by a TypeScript
+	`interface` (e.g., storage, recipe repositories, timers, API clients).
+- Implementations MUST depend on interfaces (not concretions) to keep code
+	testable.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### Layered Architecture + Clear Contracts
+Separate UI, state orchestration, and domain logic:
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+- UI components MUST remain presentation-focused.
+- Domain logic MUST be deterministic where possible and isolated from IO.
+- Side effects (persistence, network calls, time) MUST go through interfaces.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### Backend-Ready Recipe Data + Export Path
+We will eventually add a Python backend that allows users to modify recipes and
+record completion.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- Recipe data packaged into the frontend MUST be stored in a portable, versioned
+	format (e.g., JSON with a schema/version field).
+- Frontend code MUST be written so a future backend can replace packaged data
+	without rewriting UI (swap via interfaces).
+- If a Python section exists, it MAY provide an export tool that generates the
+	packaged recipes used by the frontend.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Technology & Platform Constraints
+
+- Frontend is a React app intended to run on mobile.
+- UI MUST use Fluent UI React v9.
+- TypeScript is the default language for frontend code to support interfaces.
+- Data formats that may cross the frontend/backend boundary MUST be explicit and
+	versioned.
+
+## Development Workflow & Quality Gates
+
+- PRs MUST include unit tests for all new/changed methods.
+- PRs MUST introduce/adjust interfaces when adding new dependencies or seams.
+- Prefer small, incremental changes that keep the app releasable.
+- If requirements are ambiguous, implement the simplest behavior that satisfies
+	the spec and preserves mobile usability.
 
 ## Governance
 <!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other project guidance.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- **Compliance review**: Every PR/review MUST verify compliance with the Core
+	Principles.
+- **Amendments**: Amendments MUST update this file and any affected
+	`.specify/templates/*` documents in the same change.
+- **Versioning**: Constitution changes follow semantic versioning:
+	- MAJOR: breaking governance change or principle removal/redefinition
+	- MINOR: new principle/section added or materially expanded
+	- PATCH: clarifications/typos/non-semantic refinements
+
+**Version**: 0.1.0 | **Ratified**: TODO(RATIFICATION_DATE): confirm original adoption date (YYYY-MM-DD) | **Last Amended**: 2025-12-28
