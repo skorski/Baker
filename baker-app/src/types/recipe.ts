@@ -2,11 +2,21 @@ export interface Recipe {
   id: string;
   name: string;
   baseFlourWeight: number;
-  hydrationHint?: string;
+  hydrationHint?: string | number;
+  targetUnit?: string;
+  defaultDoughComposition?: Record<string, number>;
   ingredients: Ingredient[];
   steps: Step[];
   notes?: string;
   source?: string;
+  sources?: Source[];
+}
+
+export interface Source {
+  title: string;
+  volume?: number;
+  page?: number;
+  url?: string;
 }
 
 export interface Ingredient {
@@ -24,17 +34,26 @@ export type IngredientType =
   | 'seasoning'
   | 'leavening'
   | 'enrichment'
-  | 'mix-in';
+  | 'mix-in'
+  | 'sugar'
+  | 'gluten'
+  | 'salt'
+  | 'yeast'
+  | 'oil'
+  | 'egg';
 
 export interface Step {
   id: string;
   title: string;
   description: string;
   technique: TechniqueType;
-  activeMinutes: number;
-  passiveMinutes: number;
+  activeMinutes?: number;
+  passiveMinutes?: number;
   temperature?: string;
-  dependencies: string[];
+  temperatureC?: number;
+  dependencies?: string[];
+  after?: string;
+  combine?: { ingredientId: string }[];
 }
 
 export type TechniqueType =
@@ -45,7 +64,13 @@ export type TechniqueType =
   | 'proofing'
   | 'scoring'
   | 'baking'
-  | 'cooling';
+  | 'cooling'
+  | 'machine mix'
+  | 'bulk ferment'
+  | 'shape'
+  | 'proof'
+  | 'score'
+  | 'bake';
 
 export interface CalculatedIngredient extends Ingredient {
   weight: number;

@@ -5,6 +5,8 @@
       "name": "Basic Bread",
       "baseFlourWeight": 500,
       "hydrationHint": "65% hydration",
+      "targetUnit": "loaf",
+      "defaultDoughComposition": { "loaf": 1 },
       "ingredients": [
         {
           "id": "flour",
@@ -92,6 +94,84 @@
       ],
       "notes": "This is a simple, reliable recipe perfect for beginners.",
       "source": "Traditional"
+    },
+    {
+      "id": "white_sandwich_bread",
+      "name": "White Sandwich Bread",
+      "targetUnit": "loaf",
+      "defaultDoughComposition": { "loaf": 1 },
+      "baseFlourWeight": 525,
+      "hydrationHint": 69.7,
+      "ingredients": [
+        { "id": "milk", "name": "Whole milk (cold)", "percentage": 79.05, "type": "liquid" },
+        { "id": "flour", "name": "Bread flour", "percentage": 100, "type": "flour" },
+        { "id": "sugar", "name": "Sugar", "percentage": 7.62, "type": "sugar" },
+        { "id": "vital_gluten", "name": "Vital wheat gluten", "percentage": 1.9, "type": "gluten" },
+        { "id": "salt", "name": "Salt", "percentage": 1.52, "type": "salt" },
+        { "id": "yeast", "name": "Instant dry osmotolerant yeast", "percentage": 1.52, "type": "yeast" },
+        { "id": "oil", "name": "Vegetable oil", "percentage": 0, "type": "oil", "amountHint": "as needed" },
+        { "id": "egg_wash", "name": "Egg wash", "percentage": 0, "type": "egg", "amountHint": "as needed" }
+      ],
+      "steps": [
+        {
+          "id": "mix",
+          "title": "Mix",
+          "description": "Combine milk and yeast in mixer bowl, stir to dissolve yeast. Add flour, sugar, and gluten, then mix on low to medium speed until full gluten development.",
+          "technique": "machine mix",
+          "activeMinutes": 14,
+          "passiveMinutes": 18
+        },
+        {
+          "id": "bulk_ferment",
+          "after": "mix",
+          "title": "Bulk ferment",
+          "description": "1 book fold after 30 minutes, rest another 30 minutes, repeat fold, then rest again.",
+          "technique": "bulk ferment",
+          "temperatureC": 27,
+          "passiveMinutes": 60
+        },
+        {
+          "id": "divide_shape",
+          "after": "bulk_ferment",
+          "title": "Divide and shape",
+          "description": "Divide for large loaf or small loaf (500g). Shape into oblong bâtard, brush with oil before proofing.",
+          "technique": "shape",
+          "activeMinutes": 3
+        },
+        {
+          "id": "final_proof",
+          "after": "divide_shape",
+          "title": "Final proof",
+          "description": "Proof at 27°C/80°F for 45–60 min, or at 21°C/70°F for 90–120 min.",
+          "technique": "proof",
+          "passiveMinutes": 60
+        },
+        {
+          "id": "score",
+          "after": "final_proof",
+          "title": "Score",
+          "description": "Single score down the center. Apply oil or egg wash before baking.",
+          "technique": "score",
+          "activeMinutes": 5
+        },
+        {
+          "id": "bake",
+          "after": "score",
+          "title": "Bake",
+          "description": "Bake according to White Sandwich Bread Baking Times and Temperatures. Remove from pans 5 minutes before done, finish on wire rack in oven with vent open.",
+          "technique": "bake",
+          "activeMinutes": 30,
+          "passiveMinutes": 40
+        }
+      ],
+      "notes": "Yield ~1.0 kg dough. Timings based on Modernist Bread recommendations for white sandwich bread.",
+      "sources": [
+        {
+          "title": "Modernist Bread",
+          "volume": 6,
+          "page": 184
+        }
+      ]
     }
   ]
 }

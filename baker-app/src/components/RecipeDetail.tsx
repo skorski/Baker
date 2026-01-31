@@ -8,6 +8,25 @@ import IngredientList from './IngredientList';
 import StepList from './StepList';
 import recipesData from '../data/recipes.json';
 
+function formatHydration(hint: string | number | undefined): string | null {
+  if (hint === undefined) return null;
+  if (typeof hint === 'number') return `${hint}% hydration`;
+  return hint;
+}
+
+function formatSource(recipe: Recipe): string | null {
+  if (recipe.source) return recipe.source;
+  if (recipe.sources && recipe.sources.length > 0) {
+    return recipe.sources.map(s => {
+      let text = s.title;
+      if (s.volume) text += `, Vol. ${s.volume}`;
+      if (s.page) text += `, p. ${s.page}`;
+      return text;
+    }).join('; ');
+  }
+  return null;
+}
+
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
   const recipe = recipesData.recipes.find(r => r.id === id) as Recipe | undefined;
@@ -40,6 +59,9 @@ export default function RecipeDetail() {
     );
   }
 
+  const hydrationDisplay = formatHydration(recipe.hydrationHint);
+  const sourceDisplay = formatSource(recipe);
+
   return (
     <div className="container mx-auto px-6 py-12 max-w-5xl">
       <Link to="/" className="text-sm text-stone-400 hover:text-stone-600 transition-colors mb-6 inline-block">
@@ -48,8 +70,8 @@ export default function RecipeDetail() {
       
       <header className="mb-10">
         <h1 className="text-3xl font-light tracking-tight text-stone-900 mb-2">{recipe.name}</h1>
-        {recipe.hydrationHint && (
-          <p className="text-stone-500">{recipe.hydrationHint}</p>
+        {hydrationDisplay && (
+          <p className="text-stone-500">{hydrationDisplay}</p>
         )}
       </header>
 
@@ -89,8 +111,8 @@ export default function RecipeDetail() {
         </div>
       )}
 
-      {recipe.source && (
-        <p className="mt-6 text-sm text-stone-400">Source: {recipe.source}</p>
+      {sourceDisplay && (
+        <p className="mt-6 text-sm text-stone-400">Source: {sourceDisplay}</p>
       )}
     </div>
   );

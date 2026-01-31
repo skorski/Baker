@@ -20,13 +20,14 @@ export default function StepList({ steps }: StepListProps) {
               </h3>
               <p className="text-stone-600 text-sm mb-2">{step.description}</p>
               <div className="flex gap-4 text-xs text-stone-400">
-                {step.activeMinutes > 0 && (
+                {step.activeMinutes && step.activeMinutes > 0 && (
                   <span>{step.activeMinutes} min active</span>
                 )}
-                {step.passiveMinutes > 0 && (
+                {step.passiveMinutes && step.passiveMinutes > 0 && (
                   <span>{step.passiveMinutes} min passive</span>
                 )}
                 {step.temperature && <span>{step.temperature}</span>}
+                {step.temperatureC && <span>{step.temperatureC}°C</span>}
               </div>
             </div>
           </div>
