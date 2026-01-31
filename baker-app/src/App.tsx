@@ -7,7 +7,7 @@ import recipesData from './data/recipes.json';
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-stone-50">
         <Routes>
           <Route path="/" element={<RecipeList recipes={recipesData.recipes as Recipe[]} />} />
           <Route path="/recipe/:id" element={<RecipeDetail />} />

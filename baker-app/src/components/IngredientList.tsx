@@ -7,19 +7,19 @@ interface IngredientListProps {
 
 export default function IngredientList({ ingredients }: IngredientListProps) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-2xl font-semibold mb-4">Ingredients</h2>
-      <div className="space-y-2">
+    <div className="bg-white p-5 rounded-lg border border-stone-200">
+      <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-4">Ingredients</h2>
+      <div className="divide-y divide-stone-100">
         {ingredients.map(ingredient => (
           <div
             key={ingredient.id}
-            className="flex justify-between items-center py-2 border-b last:border-b-0"
+            className="flex justify-between items-center py-3"
           >
-            <span className="font-medium">{ingredient.name}</span>
+            <span className="text-stone-900">{ingredient.name}</span>
             <div className="text-right">
-              <span className="text-lg">{ingredient.displayWeight}</span>
-              <span className="text-sm text-gray-500 ml-2">
-                ({ingredient.percentage}%)
+              <span className="text-stone-900 font-medium">{ingredient.displayWeight}</span>
+              <span className="text-sm text-stone-400 ml-2">
+                {ingredient.percentage}%
               </span>
             </div>
           </div>

@@ -13,14 +13,14 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   return (
     <Link
       to={`/recipe/${recipe.id}`}
-      className="block p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
+      className="block p-5 bg-white rounded-lg border border-stone-200 hover:border-stone-300 transition-colors"
     >
-      <h2 className="text-2xl font-semibold mb-2">{recipe.name}</h2>
+      <h2 className="text-lg font-medium text-stone-900 mb-1">{recipe.name}</h2>
       {recipe.hydrationHint && (
-        <p className="text-gray-600 mb-2">{recipe.hydrationHint}</p>
+        <p className="text-sm text-stone-500 mb-2">{recipe.hydrationHint}</p>
       )}
-      <p className="text-sm text-gray-500">
-        Default: {recipe.baseFlourWeight}g flour
+      <p className="text-sm text-stone-400">
+        {recipe.baseFlourWeight}g flour
       </p>
     </Link>
   );

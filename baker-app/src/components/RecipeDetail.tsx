@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import type { Recipe } from '../types/recipe';
 import { calculateFlourWeight, calculateIngredients } from '../utils/calculations';
 import ScalingCalculator from './ScalingCalculator';
@@ -31,15 +31,25 @@ export default function RecipeDetail() {
   );
 
   if (!recipe) {
-    return <div className="container mx-auto px-4 py-8">Recipe not found</div>;
+    return (
+      <div className="container mx-auto px-6 py-12 max-w-5xl">
+        <p className="text-stone-500">Recipe not found</p>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-4">{recipe.name}</h1>
-      {recipe.hydrationHint && (
-        <p className="text-xl text-gray-600 mb-8">{recipe.hydrationHint}</p>
-      )}
+    <div className="container mx-auto px-6 py-12 max-w-5xl">
+      <Link to="/" className="text-sm text-stone-400 hover:text-stone-600 transition-colors mb-6 inline-block">
+        ← Back to recipes
+      </Link>
+      
+      <header className="mb-10">
+        <h1 className="text-3xl font-light tracking-tight text-stone-900 mb-2">{recipe.name}</h1>
+        {recipe.hydrationHint && (
+          <p className="text-stone-500">{recipe.hydrationHint}</p>
+        )}
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
@@ -67,14 +77,14 @@ export default function RecipeDetail() {
       )}
 
       {recipe.notes && (
-        <div className="mt-8 p-4 bg-blue-50 rounded">
-          <h3 className="font-semibold mb-2">Notes:</h3>
-          <p>{recipe.notes}</p>
+        <div className="mt-10 p-5 bg-stone-100 rounded-lg border border-stone-200">
+          <h3 className="text-sm font-medium text-stone-700 mb-2">Notes</h3>
+          <p className="text-stone-600">{recipe.notes}</p>
         </div>
       )}
 
       {recipe.source && (
-        <p className="mt-4 text-sm text-gray-500">Source: {recipe.source}</p>
+        <p className="mt-6 text-sm text-stone-400">Source: {recipe.source}</p>
       )}
     </div>
   );
