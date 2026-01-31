@@ -58,6 +58,22 @@ export interface ScalingState {
   isScaled: boolean;
 }
 
+export interface Preferment {
+  weight: number;
+  hydration: number;
+}
+
+export interface PrefermentContribution {
+  flour: number;
+  water: number;
+}
+
+export interface CalculatedIngredientWithPreferment extends CalculatedIngredient {
+  prefermentDeduction?: number;
+  finalWeight: number;
+  finalDisplayWeight: string;
+}
+
 export type ValidationError =
   | 'empty'
   | 'non-numeric'

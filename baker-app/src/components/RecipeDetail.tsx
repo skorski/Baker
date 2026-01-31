@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import type { Recipe } from '../types/recipe';
-import { calculateFlourWeight, calculateIngredients } from '../utils/calculations';
+import type { Recipe, Preferment } from '../types/recipe';
+import { calculateFlourWeight, calculateIngredientsWithPreferment } from '../utils/calculations';
 import ScalingCalculator from './ScalingCalculator';
+import PrefermentCalculator from './PrefermentCalculator';
 import IngredientList from './IngredientList';
 import StepList from './StepList';
 import recipesData from '../data/recipes.json';
@@ -12,6 +13,7 @@ export default function RecipeDetail() {
   const recipe = recipesData.recipes.find(r => r.id === id) as Recipe | undefined;
 
   const [desiredTotalWeight, setDesiredTotalWeight] = useState<number | null>(null);
+  const [preferment, setPreferment] = useState<Preferment | null>(null);
 
   const flourWeight = useMemo(
     () => recipe ? calculateFlourWeight(recipe, desiredTotalWeight) : 0,
@@ -19,8 +21,8 @@ export default function RecipeDetail() {
   );
 
   const calculatedIngredients = useMemo(
-    () => recipe ? calculateIngredients(recipe.ingredients, flourWeight) : [],
-    [recipe, flourWeight]
+    () => recipe ? calculateIngredientsWithPreferment(recipe.ingredients, flourWeight, preferment) : [],
+    [recipe, flourWeight, preferment]
   );
 
   const totalPercentage = useMemo(
@@ -59,6 +61,10 @@ export default function RecipeDetail() {
             totalPercentage={totalPercentage}
             onTotalWeightChange={setDesiredTotalWeight}
             isScaled={desiredTotalWeight !== null}
+          />
+          <PrefermentCalculator
+            preferment={preferment}
+            onPrefermentChange={setPreferment}
           />
         </div>
 
