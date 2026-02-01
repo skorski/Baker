@@ -51,6 +51,7 @@ export default function PrefermentCalculator({
         <div className="flex-1">
           <input
             type="text"
+            inputMode="decimal"
             value={weightInput}
             onChange={handleWeightChange}
             className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent text-sm"
@@ -74,6 +75,7 @@ export default function PrefermentCalculator({
                 <label className="text-xs text-stone-500 whitespace-nowrap">Hydration %</label>
                 <input
                   type="text"
+                  inputMode="decimal"
                   value={hydration}
                   onChange={handleHydrationChange}
                   className="w-20 px-2 py-1 border border-stone-200 rounded text-sm text-center"

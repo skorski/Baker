@@ -1,7 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ArrowCounterClockwise } from '@phosphor-icons/react';
 import type { Recipe, Preferment, Ingredient } from '../types/recipe';
 import { calculateFlourWeight, calculateIngredientsWithPreferment } from '../utils/calculations';
+import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, type RecipeProgress, type ProductQuantity, type ScaleMode } from '../utils/localStorage';
+import { doughProducts } from '../data/doughProducts';
 import ScalingCalculator from './ScalingCalculator';
 import PrefermentCalculator from './PrefermentCalculator';
 import IngredientList from './IngredientList';
@@ -21,6 +24,9 @@ function formatSource(recipe: Recipe): string | null {
   return null;
 }
 
+const defaultProductQuantities = (): ProductQuantity[] => 
+  doughProducts.map(p => ({ productId: p.id, quantity: 0 }));
+
 export type PercentageOverrides = Record<string, number>;
 
 export default function RecipeDetail() {
@@ -31,6 +37,69 @@ export default function RecipeDetail() {
   const [preferment, setPreferment] = useState<Preferment | null>(null);
   const [percentageOverrides, setPercentageOverrides] = useState<PercentageOverrides>({});
   const [wholeWheatPercent, setWholeWheatPercent] = useState<number | null>(null);
+  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const [productQuantities, setProductQuantities] = useState<ProductQuantity[]>(defaultProductQuantities);
+  const [scaleMode, setScaleMode] = useState<ScaleMode>('products');
+  const [gramsInput, setGramsInput] = useState('');
+  const [manualInput, setManualInput] = useState('');
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load saved progress from localStorage
+  useEffect(() => {
+    if (!id) return;
+    const saved = loadRecipeProgress(id);
+    if (saved) {
+      setCompletedSteps(saved.completedSteps || []);
+      setPercentageOverrides(saved.percentageOverrides || {});
+      setWholeWheatPercent(saved.wholeWheatPercent ?? null);
+      setPreferment(saved.preferment ?? null);
+      setDesiredTotalWeight(saved.desiredTotalWeight ?? null);
+      setProductQuantities(saved.productQuantities?.length ? saved.productQuantities : defaultProductQuantities());
+      setScaleMode(saved.scaleMode || 'products');
+      setGramsInput(saved.gramsInput || '');
+      setManualInput(saved.manualInput || '');
+    }
+    setIsLoaded(true);
+  }, [id]);
+
+  // Save progress to localStorage when state changes
+  useEffect(() => {
+    if (!id || !isLoaded) return;
+    const progress: RecipeProgress = {
+      completedSteps,
+      percentageOverrides,
+      wholeWheatPercent,
+      preferment,
+      desiredTotalWeight,
+      productQuantities,
+      scaleMode,
+      gramsInput,
+      manualInput
+    };
+    saveRecipeProgress(id, progress);
+  }, [id, isLoaded, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput]);
+
+  const handleStepToggle = useCallback((stepId: string) => {
+    setCompletedSteps(prev =>
+      prev.includes(stepId)
+        ? prev.filter(s => s !== stepId)
+        : [...prev, stepId]
+    );
+  }, []);
+
+  const handleResetRecipe = useCallback(() => {
+    if (!id) return;
+    setCompletedSteps([]);
+    setPercentageOverrides({});
+    setWholeWheatPercent(null);
+    setPreferment(null);
+    setDesiredTotalWeight(null);
+    setProductQuantities(defaultProductQuantities());
+    setScaleMode('products');
+    setGramsInput('');
+    setManualInput('');
+    clearRecipeProgress(id);
+  }, [id]);
 
   // Find the primary bread flour ingredient (first flour type, or one with 'bread' in name)
   const primaryFlourId = useMemo(() => {
@@ -173,15 +242,36 @@ export default function RecipeDetail() {
 
   const sourceDisplay = formatSource(recipe);
 
+  const hasProgress = completedSteps.length > 0 || 
+    Object.keys(percentageOverrides).length > 0 || 
+    wholeWheatPercent !== null || 
+    preferment !== null || 
+    desiredTotalWeight !== null ||
+    productQuantities.some(pq => pq.quantity > 0) ||
+    gramsInput !== '' ||
+    manualInput !== '';
+
   return (
     <div className="container mx-auto px-6 py-12 max-w-5xl">
       <Link to="/" className="text-sm text-stone-400 hover:text-stone-600 transition-colors mb-6 inline-block">
         ← Back to recipes
       </Link>
       
-      <header className="mb-10">
-        <h1 className="text-3xl font-light tracking-tight text-stone-900">{recipe.name}</h1>
-        <p className="text-stone-500 mt-1">{hydrationPercentage}% hydration</p>
+      <header className="mb-10 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-light tracking-tight text-stone-900">{recipe.name}</h1>
+          <p className="text-stone-500 mt-1">{hydrationPercentage}% hydration</p>
+        </div>
+        {hasProgress && (
+          <button
+            onClick={handleResetRecipe}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
+            title="Reset all progress and customizations"
+          >
+            <ArrowCounterClockwise size={16} />
+            <span className="hidden sm:inline">Reset</span>
+          </button>
+        )}
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -192,6 +282,14 @@ export default function RecipeDetail() {
             totalPercentage={totalPercentage}
             onTotalWeightChange={setDesiredTotalWeight}
             isScaled={desiredTotalWeight !== null}
+            productQuantities={productQuantities}
+            onProductQuantitiesChange={setProductQuantities}
+            scaleMode={scaleMode}
+            onScaleModeChange={setScaleMode}
+            gramsInput={gramsInput}
+            onGramsInputChange={setGramsInput}
+            manualInput={manualInput}
+            onManualInputChange={setManualInput}
           />
           <PrefermentCalculator
             preferment={preferment}
@@ -215,7 +313,12 @@ export default function RecipeDetail() {
 
       {recipe.steps.length > 0 && (
         <div className="mt-12">
-          <RecipeTree ingredients={calculatedIngredients} steps={recipe.steps} />
+          <RecipeTree 
+            ingredients={calculatedIngredients} 
+            steps={recipe.steps}
+            completedSteps={completedSteps}
+            onStepToggle={handleStepToggle}
+          />
         </div>
       )}
 
