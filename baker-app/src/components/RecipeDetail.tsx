@@ -6,7 +6,7 @@ import ScalingCalculator from './ScalingCalculator';
 import PrefermentCalculator from './PrefermentCalculator';
 import IngredientList from './IngredientList';
 import RecipeTree from './RecipeTree';
-import recipesData from '../data/recipes.json';
+import { getRecipeById } from '../data/recipeLoader';
 
 function formatSource(recipe: Recipe): string | null {
   if (recipe.source) return recipe.source;
@@ -25,7 +25,7 @@ export type PercentageOverrides = Record<string, number>;
 
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
-  const recipe = (recipesData.recipes as unknown as Recipe[]).find(r => r.id === id);
+  const recipe = id ? getRecipeById(id) : undefined;
 
   const [desiredTotalWeight, setDesiredTotalWeight] = useState<number | null>(null);
   const [preferment, setPreferment] = useState<Preferment | null>(null);
