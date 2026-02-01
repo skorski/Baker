@@ -124,6 +124,7 @@ export default function IngredientList({
                   ) : isEditing ? (
                     <input
                       type="text"
+                      inputMode="decimal"
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
                       onBlur={() => handleFinishEdit(ingredient.id)}
@@ -162,6 +163,7 @@ export default function IngredientList({
                   {editingWholeWheat ? (
                     <input
                       type="text"
+                      inputMode="decimal"
                       value={wholeWheatEditValue}
                       onChange={(e) => setWholeWheatEditValue(e.target.value)}
                       onBlur={handleWholeWheatEditFinish}
