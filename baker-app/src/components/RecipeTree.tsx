@@ -1,8 +1,11 @@
+import { CheckCircle, Circle } from '@phosphor-icons/react';
 import type { CalculatedIngredientWithPreferment, Step } from '../types/recipe';
 
 interface RecipeTreeProps {
   ingredients: CalculatedIngredientWithPreferment[];
   steps: Step[];
+  completedSteps: string[];
+  onStepToggle: (stepId: string) => void;
 }
 
 function formatStepTime(step: Step): string | undefined {
@@ -22,7 +25,7 @@ function formatStepTime(step: Step): string | undefined {
   return parts.length > 0 ? parts.join(', ') : undefined;
 }
 
-export default function RecipeTree({ ingredients, steps }: RecipeTreeProps) {
+export default function RecipeTree({ ingredients, steps, completedSteps, onStepToggle }: RecipeTreeProps) {
   if (steps.length === 0) {
     return null;
   }
@@ -204,12 +207,36 @@ export default function RecipeTree({ ingredients, steps }: RecipeTreeProps) {
       {/* Step descriptions below */}
       <div className="border-t border-stone-200 p-5 space-y-3">
         <div className="text-xs text-stone-400 uppercase tracking-wide mb-3">Step Details</div>
-        {steps.map((step, index) => (
-          <div key={step.id} className="text-sm">
-            <span className="font-medium text-stone-700">{index + 1}. {step.title}:</span>
-            <span className="text-stone-600 ml-2">{step.description}</span>
-          </div>
-        ))}
+        {steps.map((step, index) => {
+          const isCompleted = completedSteps.includes(step.id);
+          return (
+            <button
+              key={step.id}
+              onClick={() => onStepToggle(step.id)}
+              className={`w-full text-left flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                isCompleted 
+                  ? 'bg-stone-100 text-stone-400' 
+                  : 'hover:bg-stone-50'
+              }`}
+            >
+              <span className="flex-shrink-0 mt-0.5">
+                {isCompleted ? (
+                  <CheckCircle size={20} weight="fill" className="text-green-600" />
+                ) : (
+                  <Circle size={20} className="text-stone-300" />
+                )}
+              </span>
+              <div className={`text-sm ${isCompleted ? 'line-through' : ''}`}>
+                <span className={`font-medium ${isCompleted ? 'text-stone-400' : 'text-stone-700'}`}>
+                  {index + 1}. {step.title}:
+                </span>
+                <span className={`ml-2 ${isCompleted ? 'text-stone-400' : 'text-stone-600'}`}>
+                  {step.description}
+                </span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
