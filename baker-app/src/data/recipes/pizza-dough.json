@@ -1,0 +1,72 @@
+{
+  "id": "pizza-dough",
+  "name": "Pizza Dough",
+  "targetUnit": "pizza 16in",
+  "defaultDoughComposition": { "pizza 16in": 1 },
+  "baseFlourWeight": 500,
+  "ingredients": [
+    { "id": "bread_flour", "name": "Bread flour", "percentage": 86, "type": "flour" },
+    { "id": "ww_flour", "name": "Whole wheat flour", "percentage": 14, "type": "flour" },
+    { "id": "water", "name": "Water", "percentage": 62, "type": "liquid" },
+    { "id": "yeast", "name": "Active dry yeast", "percentage": 0.6, "type": "leavening" },
+    { "id": "salt", "name": "Salt", "percentage": 1.75, "type": "salt" },
+    { "id": "evoo", "name": "Extra virgin olive oil", "percentage": 0.5, "type": "fat" },
+    { "id": "sugar", "name": "Sugar", "percentage": 0.5, "type": "sugar" },
+    { "id": "malt", "name": "Diastatic malt", "percentage": 1, "type": "enrichment" },
+    { "id": "starter", "name": "Starter", "percentage": 0, "type": "leavening", "amountHint": "optional" }
+  ],
+  "steps": [
+    {
+      "id": "mix",
+      "title": "Mix",
+      "description": "Combine flours, water, yeast, salt, oil, sugar, and malt. Mix until a shaggy dough forms.",
+      "technique": "mixing",
+      "activeMinutes": 5,
+      "ingredients": ["bread_flour", "ww_flour", "water", "yeast", "salt", "evoo", "sugar", "malt"]
+    },
+    {
+      "id": "knead",
+      "after": "mix",
+      "title": "Knead",
+      "description": "Knead until smooth and elastic, about 8-10 minutes by hand or 5-6 minutes in a stand mixer.",
+      "technique": "kneading",
+      "activeMinutes": 8
+    },
+    {
+      "id": "bulk_ferment",
+      "after": "knead",
+      "title": "Bulk ferment",
+      "description": "Cover and let rise at room temperature until doubled, or cold ferment in refrigerator for 24-72 hours for better flavor.",
+      "technique": "bulk ferment",
+      "passiveMinutes": 90
+    },
+    {
+      "id": "divide",
+      "after": "bulk_ferment",
+      "title": "Divide and ball",
+      "description": "Divide dough into portions. Shape into tight balls and let rest 15-30 minutes before stretching.",
+      "technique": "shape",
+      "activeMinutes": 5,
+      "passiveMinutes": 20
+    },
+    {
+      "id": "stretch",
+      "after": "divide",
+      "title": "Stretch",
+      "description": "Gently stretch dough into a round, working from the center outward. Leave a slightly thicker edge for the crust.",
+      "technique": "shaping",
+      "activeMinutes": 2
+    },
+    {
+      "id": "bake",
+      "after": "stretch",
+      "title": "Bake",
+      "description": "Top as desired and bake at the highest temperature your oven allows, ideally 500-550°F or in a pizza oven at 700°F+.",
+      "technique": "bake",
+      "activeMinutes": 2,
+      "passiveMinutes": 8,
+      "temperature": "500-550°F"
+    }
+  ],
+  "notes": "Cold fermentation produces better flavor and texture. For best results, make dough 1-3 days ahead."
+}

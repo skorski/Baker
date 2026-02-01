@@ -1,0 +1,121 @@
+{
+  "id": "modernist_sourdough_master",
+  "name": "Master Sourdough",
+  "baseFlourWeight": 480,
+  "targetUnit": "boule",
+  "defaultDoughComposition": { "boule": 1 },
+  "ingredients": [
+    { "id": "bread_flour", "name": "Bread flour", "percentage": 100, "type": "flour" },
+    { "id": "water", "name": "Water", "percentage": 65.63, "type": "liquid" },
+    { "id": "levain", "name": "Liquid levain (mature)", "percentage": 40.63, "type": "leavening" },
+    { "id": "wheat_bran", "name": "Wheat bran", "percentage": 2.08, "type": "enrichment" },
+    { "id": "diastatic_malt", "name": "Diastatic malt powder", "percentage": 0.21, "type": "enrichment" },
+    { "id": "salt", "name": "Fine sea salt", "percentage": 2.5, "type": "salt" }
+  ],
+  "steps": [
+    {
+      "id": "autolyse",
+      "title": "Autolyse",
+      "description": "Combine flour and water until shaggy. Cover and rest.",
+      "technique": "mixing",
+      "activeMinutes": 5,
+      "passiveMinutes": 30,
+      "ingredients": ["bread_flour", "water"]
+    },
+    {
+      "id": "add_levain",
+      "after": "autolyse",
+      "title": "Incorporate Levain",
+      "description": "Add mature liquid levain to autolysed dough. Mix until homogeneous.",
+      "technique": "mixing",
+      "activeMinutes": 3,
+      "ingredients": ["levain"]
+    },
+    {
+      "id": "add_salt_and_enrichments",
+      "after": "add_levain",
+      "title": "Add Salt, Bran, and Malt",
+      "description": "Sprinkle salt, wheat bran, and diastatic malt over dough. Mix until fully incorporated.",
+      "technique": "mixing",
+      "activeMinutes": 3,
+      "ingredients": ["salt", "wheat_bran", "diastatic_malt"]
+    },
+    {
+      "id": "gluten_development",
+      "after": "add_salt_and_enrichments",
+      "title": "Gluten Development",
+      "description": "Hand method: stretch-and-folds every 30 min, 6 folds total. Machine method: mix on low to combine, then medium speed until medium gluten development.",
+      "technique": "folding",
+      "activeMinutes": 5,
+      "passiveMinutes": 240
+    },
+    {
+      "id": "bulk_fermentation",
+      "after": "gluten_development",
+      "title": "Bulk Fermentation",
+      "description": "Allow dough to ferment until full gluten development. Verify using windowpane test.",
+      "technique": "bulk ferment",
+      "temperatureC": 24,
+      "activeMinutes": 5,
+      "passiveMinutes": 240
+    },
+    {
+      "id": "divide",
+      "after": "bulk_fermentation",
+      "title": "Divide",
+      "description": "Divide dough according to final shape: single boule/batard (no divide), small boules (500g pieces), or rolls (75g pieces).",
+      "technique": "shaping",
+      "activeMinutes": 5
+    },
+    {
+      "id": "preshape",
+      "after": "divide",
+      "title": "Preshape",
+      "description": "Preshape dough into loose rounds. Rest before final shaping.",
+      "technique": "shaping",
+      "activeMinutes": 5,
+      "passiveMinutes": 20
+    },
+    {
+      "id": "final_shape",
+      "after": "preshape",
+      "title": "Final Shape",
+      "description": "Shape dough into final form (boule, batard, or roll).",
+      "technique": "shaping",
+      "activeMinutes": 5
+    },
+    {
+      "id": "final_proof",
+      "after": "final_shape",
+      "title": "Final Proof",
+      "description": "Cold proof dough in refrigerator.",
+      "technique": "proofing",
+      "temperatureC": 4,
+      "passiveMinutes": 720
+    },
+    {
+      "id": "score",
+      "after": "final_proof",
+      "title": "Score",
+      "description": "Score dough as desired.",
+      "technique": "scoring",
+      "activeMinutes": 1
+    },
+    {
+      "id": "bake",
+      "after": "score",
+      "title": "Bake",
+      "description": "Bake according to oven type and loaf size.",
+      "technique": "baking",
+      "activeMinutes": 15,
+      "passiveMinutes": 30
+    }
+  ],
+  "notes": "Diastatic malt is recommended for cold proofing longer than 12 hours. Multiply recipe by two for a miche. Windowpane test is the authoritative gluten development check. DDT 24-26°C (75-78°F).",
+  "sources": [
+    {
+      "title": "Modernist Bread",
+      "volume": 6
+    }
+  ]
+}
