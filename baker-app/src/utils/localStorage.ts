@@ -1,5 +1,6 @@
 const STORAGE_KEY_PREFIX = 'baker-app';
 const HISTORY_KEY_PREFIX = 'baker-app-history';
+const VERSION_KEY_PREFIX = 'baker-app-version';
 
 export interface ProductQuantity {
   productId: string;
@@ -20,8 +21,18 @@ export interface RecipeProgress {
   manualInput: string;
 }
 
-export interface HistoryEntry {
+export interface VersionEntry {
   version: number;
+  date: string; // ISO string
+  progress: RecipeProgress;
+}
+
+export interface RecipeVersions {
+  entries: VersionEntry[];
+}
+
+export interface HistoryEntry {
+  id: number;
   date: string; // ISO string
   progress: RecipeProgress;
 }
@@ -70,6 +81,74 @@ function getHistoryKey(recipeId: string): string {
   return `${HISTORY_KEY_PREFIX}-${recipeId}`;
 }
 
+function getVersionKey(recipeId: string): string {
+  return `${VERSION_KEY_PREFIX}-${recipeId}`;
+}
+
+// Compare two progress objects for equality (ignoring completedSteps)
+function progressEquals(a: RecipeProgress, b: RecipeProgress): boolean {
+  return (
+    JSON.stringify(a.percentageOverrides) === JSON.stringify(b.percentageOverrides) &&
+    a.wholeWheatPercent === b.wholeWheatPercent &&
+    JSON.stringify(a.preferment) === JSON.stringify(b.preferment) &&
+    a.desiredTotalWeight === b.desiredTotalWeight &&
+    JSON.stringify(a.productQuantities) === JSON.stringify(b.productQuantities) &&
+    a.scaleMode === b.scaleMode &&
+    a.gramsInput === b.gramsInput &&
+    a.manualInput === b.manualInput
+  );
+}
+
+// === VERSION FUNCTIONS (unique recipe configurations) ===
+
+export function loadRecipeVersions(recipeId: string): RecipeVersions {
+  try {
+    const stored = localStorage.getItem(getVersionKey(recipeId));
+    if (!stored) return { entries: [] };
+    return JSON.parse(stored) as RecipeVersions;
+  } catch {
+    return { entries: [] };
+  }
+}
+
+export function saveVersion(recipeId: string, progress: RecipeProgress): VersionEntry | null {
+  try {
+    const versions = loadRecipeVersions(recipeId);
+    
+    // Check if this version already exists
+    const isDuplicate = versions.entries.some(entry => progressEquals(entry.progress, progress));
+    if (isDuplicate) {
+      return null; // Don't save duplicate versions
+    }
+    
+    const nextVersion = versions.entries.length > 0 
+      ? Math.max(...versions.entries.map(e => e.version)) + 1 
+      : 1;
+    
+    const entry: VersionEntry = {
+      version: nextVersion,
+      date: new Date().toISOString(),
+      progress: { ...progress }
+    };
+    
+    versions.entries.push(entry);
+    localStorage.setItem(getVersionKey(recipeId), JSON.stringify(versions));
+    return entry;
+  } catch {
+    return { version: 1, date: new Date().toISOString(), progress };
+  }
+}
+
+export function clearRecipeVersions(recipeId: string): void {
+  try {
+    localStorage.removeItem(getVersionKey(recipeId));
+  } catch {
+    // Storage unavailable - silently fail
+  }
+}
+
+// === HISTORY FUNCTIONS (times the recipe was made) ===
+
 export function loadRecipeHistory(recipeId: string): RecipeHistory {
   try {
     const stored = localStorage.getItem(getHistoryKey(recipeId));
@@ -83,12 +162,12 @@ export function loadRecipeHistory(recipeId: string): RecipeHistory {
 export function saveToHistory(recipeId: string, progress: RecipeProgress): HistoryEntry {
   try {
     const history = loadRecipeHistory(recipeId);
-    const nextVersion = history.entries.length > 0 
-      ? Math.max(...history.entries.map(e => e.version)) + 1 
+    const nextId = history.entries.length > 0 
+      ? Math.max(...history.entries.map(e => e.id)) + 1 
       : 1;
     
     const entry: HistoryEntry = {
-      version: nextVersion,
+      id: nextId,
       date: new Date().toISOString(),
       progress: { ...progress }
     };
@@ -97,7 +176,7 @@ export function saveToHistory(recipeId: string, progress: RecipeProgress): Histo
     localStorage.setItem(getHistoryKey(recipeId), JSON.stringify(history));
     return entry;
   } catch {
-    return { version: 1, date: new Date().toISOString(), progress };
+    return { id: 1, date: new Date().toISOString(), progress };
   }
 }
 
@@ -174,14 +253,14 @@ export function importData(data: ExportData, importHistory: boolean, importLates
     if (importHistory && data.history) {
       for (const [recipeId, history] of Object.entries(data.history)) {
         const existingHistory = loadRecipeHistory(recipeId);
-        const maxExistingVersion = existingHistory.entries.length > 0
-          ? Math.max(...existingHistory.entries.map(e => e.version))
+        const maxExistingId = existingHistory.entries.length > 0
+          ? Math.max(...existingHistory.entries.map(e => e.id))
           : 0;
         
-        // Renumber imported entries to avoid version conflicts
+        // Renumber imported entries to avoid id conflicts
         const renumberedEntries = history.entries.map((entry, idx) => ({
           ...entry,
-          version: maxExistingVersion + idx + 1
+          id: maxExistingId + idx + 1
         }));
         
         existingHistory.entries.push(...renumberedEntries);

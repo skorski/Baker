@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowCounterClockwise, CheckCircle, CaretDown } from '@phosphor-icons/react';
+import { ArrowCounterClockwise, CheckCircle, CaretDown, FloppyDisk } from '@phosphor-icons/react';
 import type { Recipe, Preferment, Ingredient } from '../types/recipe';
 import { calculateFlourWeight, calculateIngredientsWithPreferment } from '../utils/calculations';
-import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, loadRecipeHistory, saveToHistory, formatShortDate, type RecipeProgress, type ProductQuantity, type ScaleMode, type HistoryEntry } from '../utils/localStorage';
+import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, loadRecipeHistory, saveToHistory, loadRecipeVersions, saveVersion, formatShortDate, type RecipeProgress, type ProductQuantity, type ScaleMode, type HistoryEntry, type VersionEntry } from '../utils/localStorage';
 import { doughProducts } from '../data/doughProducts';
 import ScalingCalculator from './ScalingCalculator';
 import PrefermentCalculator from './PrefermentCalculator';
@@ -43,7 +43,9 @@ export default function RecipeDetail() {
   const [gramsInput, setGramsInput] = useState('');
   const [manualInput, setManualInput] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [versionEntries, setVersionEntries] = useState<VersionEntry[]>([]);
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
+  const [showVersionDropdown, setShowVersionDropdown] = useState(false);
   const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
 
   // Load saved progress from localStorage
@@ -61,7 +63,9 @@ export default function RecipeDetail() {
       setGramsInput(saved.gramsInput || '');
       setManualInput(saved.manualInput || '');
     }
-    // Load history entries
+    // Load versions and history entries
+    const versions = loadRecipeVersions(id);
+    setVersionEntries(versions.entries);
     const history = loadRecipeHistory(id);
     setHistoryEntries(history.entries);
     setIsLoaded(true);
@@ -122,6 +126,39 @@ export default function RecipeDetail() {
     const entry = saveToHistory(id, progress);
     setHistoryEntries(prev => [...prev, entry]);
   }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput]);
+
+  const handleSaveVersion = useCallback(() => {
+    if (!id) return;
+    const progress: RecipeProgress = {
+      completedSteps,
+      percentageOverrides,
+      wholeWheatPercent,
+      preferment,
+      desiredTotalWeight,
+      productQuantities,
+      scaleMode,
+      gramsInput,
+      manualInput
+    };
+    const entry = saveVersion(id, progress);
+    if (entry) {
+      setVersionEntries(prev => [...prev, entry]);
+    }
+  }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput]);
+
+  const handleLoadVersionEntry = useCallback((entry: VersionEntry) => {
+    const { progress } = entry;
+    setCompletedSteps(progress.completedSteps || []);
+    setPercentageOverrides(progress.percentageOverrides || {});
+    setWholeWheatPercent(progress.wholeWheatPercent ?? null);
+    setPreferment(progress.preferment ?? null);
+    setDesiredTotalWeight(progress.desiredTotalWeight ?? null);
+    setProductQuantities(progress.productQuantities?.length ? progress.productQuantities : defaultProductQuantities());
+    setScaleMode(progress.scaleMode || 'products');
+    setGramsInput(progress.gramsInput || '');
+    setManualInput(progress.manualInput || '');
+    setShowVersionDropdown(false);
+  }, []);
 
   const handleLoadHistoryEntry = useCallback((entry: HistoryEntry) => {
     const { progress } = entry;
@@ -294,32 +331,60 @@ export default function RecipeDetail() {
           ← Back to recipes
         </Link>
         
-        {historyEntries.length > 0 && (
-          <div className="relative">
-            <button
-              onClick={() => setShowHistoryDropdown(!showHistoryDropdown)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
-            >
-              <span>History ({historyEntries.length})</span>
-              <CaretDown size={14} className={`transition-transform ${showHistoryDropdown ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {showHistoryDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-stone-200 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
-                {historyEntries.slice().reverse().map((entry) => (
-                  <button
-                    key={entry.version}
-                    onClick={() => handleLoadHistoryEntry(entry)}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-stone-50 border-b border-stone-100 last:border-b-0"
-                  >
-                    <span className="font-medium">v{entry.version}</span>
-                    <span className="text-stone-400 ml-2">{formatShortDate(entry.date)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {versionEntries.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => { setShowVersionDropdown(!showVersionDropdown); setShowHistoryDropdown(false); }}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
+              >
+                <span>Versions ({versionEntries.length})</span>
+                <CaretDown size={14} className={`transition-transform ${showVersionDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showVersionDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-stone-200 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
+                  {versionEntries.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry) => (
+                    <button
+                      key={entry.version}
+                      onClick={() => handleLoadVersionEntry(entry)}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-stone-50 border-b border-stone-100 last:border-b-0"
+                    >
+                      <span className="font-medium">v{entry.version}</span>
+                      <span className="text-stone-400 ml-2">{formatShortDate(entry.date)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {historyEntries.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => { setShowHistoryDropdown(!showHistoryDropdown); setShowVersionDropdown(false); }}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
+              >
+                <span>History ({historyEntries.length})</span>
+                <CaretDown size={14} className={`transition-transform ${showHistoryDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showHistoryDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-stone-200 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
+                  {historyEntries.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry) => (
+                    <button
+                      key={entry.id}
+                      onClick={() => handleLoadHistoryEntry(entry)}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-stone-50 border-b border-stone-100 last:border-b-0"
+                    >
+                      <span className="text-stone-400">{formatShortDate(entry.date)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       
       <header className="mb-10 flex items-start justify-between">
@@ -399,15 +464,24 @@ export default function RecipeDetail() {
       )}
 
       <div className="mt-10 pt-6 border-t border-stone-200">
-        <button
-          onClick={handleMadeIt}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors"
-        >
-          <CheckCircle size={20} weight="bold" />
-          Made it!
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={handleMadeIt}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors"
+          >
+            <CheckCircle size={20} weight="bold" />
+            Made it!
+          </button>
+          <button
+            onClick={handleSaveVersion}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-stone-600 hover:bg-stone-700 text-white font-medium rounded-lg transition-colors"
+          >
+            <FloppyDisk size={20} weight="bold" />
+            Save Version
+          </button>
+        </div>
         <p className="mt-2 text-sm text-stone-400">
-          Save this recipe configuration to your local history
+          "Made it" records when you made this recipe. "Save Version" saves unique configurations.
         </p>
       </div>
     </div>
