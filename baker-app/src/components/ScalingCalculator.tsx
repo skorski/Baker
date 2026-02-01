@@ -206,6 +206,7 @@ export default function ScalingCalculator({
                     </button>
                     <input
                       type="text"
+                      inputMode="numeric"
                       value={quantity}
                       onChange={(e) => handleSetQuantity(product.id, e.target.value)}
                       className="w-10 h-8 text-center text-sm font-medium border border-stone-200 rounded-md"
@@ -240,6 +241,7 @@ export default function ScalingCalculator({
           </label>
           <input
             type="text"
+            inputMode="decimal"
             value={gramsInput}
             onChange={handleGramsInputChange}
             className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent"
@@ -257,6 +259,7 @@ export default function ScalingCalculator({
           </label>
           <input
             type="text"
+            inputMode="decimal"
             value={manualInput}
             onChange={handleManualInputChange}
             className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent"
