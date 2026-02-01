@@ -1,6 +1,7 @@
 const STORAGE_KEY_PREFIX = 'baker-app';
 const HISTORY_KEY_PREFIX = 'baker-app-history';
 const VERSION_KEY_PREFIX = 'baker-app-version';
+const DEFAULT_VERSION_KEY_PREFIX = 'baker-app-default-version';
 
 export interface ProductQuantity {
   productId: string;
@@ -186,6 +187,76 @@ export function clearRecipeHistory(recipeId: string): void {
   } catch {
     // Storage unavailable - silently fail
   }
+}
+
+export function deleteHistoryEntry(recipeId: string, entryId: number): void {
+  try {
+    const history = loadRecipeHistory(recipeId);
+    history.entries = history.entries.filter(e => e.id !== entryId);
+    localStorage.setItem(getHistoryKey(recipeId), JSON.stringify(history));
+  } catch {
+    // Storage unavailable - silently fail
+  }
+}
+
+export function deleteVersion(recipeId: string, versionNumber: number): void {
+  try {
+    const versions = loadRecipeVersions(recipeId);
+    versions.entries = versions.entries.filter(e => e.version !== versionNumber);
+    localStorage.setItem(getVersionKey(recipeId), JSON.stringify(versions));
+    // Clear default if deleted version was the default
+    const defaultVersion = getDefaultVersion(recipeId);
+    if (defaultVersion === versionNumber) {
+      clearDefaultVersion(recipeId);
+    }
+  } catch {
+    // Storage unavailable - silently fail
+  }
+}
+
+function getDefaultVersionKey(recipeId: string): string {
+  return `${DEFAULT_VERSION_KEY_PREFIX}-${recipeId}`;
+}
+
+export function getDefaultVersion(recipeId: string): number | null {
+  try {
+    const stored = localStorage.getItem(getDefaultVersionKey(recipeId));
+    if (!stored) return null;
+    return parseInt(stored, 10);
+  } catch {
+    return null;
+  }
+}
+
+export function setDefaultVersion(recipeId: string, versionNumber: number): void {
+  try {
+    localStorage.setItem(getDefaultVersionKey(recipeId), String(versionNumber));
+  } catch {
+    // Storage unavailable - silently fail
+  }
+}
+
+export function clearDefaultVersion(recipeId: string): void {
+  try {
+    localStorage.removeItem(getDefaultVersionKey(recipeId));
+  } catch {
+    // Storage unavailable - silently fail
+  }
+}
+
+export function getAllVersionRecipeIds(): string[] {
+  const ids: string[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(VERSION_KEY_PREFIX + '-')) {
+        ids.push(key.replace(VERSION_KEY_PREFIX + '-', ''));
+      }
+    }
+  } catch {
+    // Storage unavailable
+  }
+  return ids;
 }
 
 export function getAllRecipeIds(): string[] {

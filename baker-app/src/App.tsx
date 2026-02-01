@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import RecipeList from './components/RecipeList';
 import RecipeDetail from './components/RecipeDetail';
+import VersionHistory from './components/VersionHistory';
 import Footer from './components/Footer';
 import { recipes } from './data/recipeLoader';
 
@@ -12,6 +13,7 @@ function App() {
           <Routes>
             <Route path="/" element={<RecipeList recipes={recipes} />} />
             <Route path="/recipe/:id" element={<RecipeDetail />} />
+            <Route path="/history" element={<VersionHistory />} />
           </Routes>
         </div>
         <Footer />
