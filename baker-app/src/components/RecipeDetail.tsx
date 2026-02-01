@@ -47,6 +47,7 @@ export default function RecipeDetail() {
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [showVersionDropdown, setShowVersionDropdown] = useState(false);
   const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
+  const [saveVersionFeedback, setSaveVersionFeedback] = useState<'saved' | 'duplicate' | null>(null);
 
   // Load saved progress from localStorage
   useEffect(() => {
@@ -143,7 +144,12 @@ export default function RecipeDetail() {
     const entry = saveVersion(id, progress);
     if (entry) {
       setVersionEntries(prev => [...prev, entry]);
+      setSaveVersionFeedback('saved');
+    } else {
+      setSaveVersionFeedback('duplicate');
     }
+    // Clear feedback after 3 seconds
+    setTimeout(() => setSaveVersionFeedback(null), 3000);
   }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput]);
 
   const handleLoadVersionEntry = useCallback((entry: VersionEntry) => {
@@ -474,10 +480,20 @@ export default function RecipeDetail() {
           </button>
           <button
             onClick={handleSaveVersion}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-stone-600 hover:bg-stone-700 text-white font-medium rounded-lg transition-colors"
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 font-medium rounded-lg transition-colors ${
+              saveVersionFeedback === 'saved'
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : saveVersionFeedback === 'duplicate'
+                ? 'bg-stone-400 text-white'
+                : 'bg-stone-600 hover:bg-stone-700 text-white'
+            }`}
           >
             <FloppyDisk size={20} weight="bold" />
-            Save Version
+            {saveVersionFeedback === 'saved'
+              ? 'Version Saved!'
+              : saveVersionFeedback === 'duplicate'
+              ? 'Already Exists'
+              : 'Save Version'}
           </button>
         </div>
         <p className="mt-2 text-sm text-stone-400">
