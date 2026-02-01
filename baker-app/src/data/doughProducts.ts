@@ -24,7 +24,7 @@ export const doughProducts: DoughProduct[] = [
   {
     id: 'pizza 16in',
     name: 'Pizza 16in',
-    weightGrams: 655,
+    weightGrams: 685,
     icon: '🍕',
     description: 'Individual pizza base'
   }

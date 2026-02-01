@@ -274,7 +274,7 @@ export default function ScalingCalculator({
         </div>
         <div className="text-center">
           <div className="text-xs text-stone-400 mb-1">Total %</div>
-          <div className="text-sm font-medium text-stone-900">{totalPercentage}%</div>
+          <div className="text-sm font-medium text-stone-900">{Math.round(totalPercentage)}%</div>
         </div>
         <div className="text-center">
           <div className="text-xs text-stone-400 mb-1">Status</div>

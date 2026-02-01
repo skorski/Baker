@@ -2,13 +2,10 @@ import type { Recipe, Ingredient, CalculatedIngredient, ValidationResult, Prefer
 
 export function calculateFlourWeight(
   recipe: Recipe,
-  desiredTotalWeight: number | null
+  desiredTotalWeight: number | null,
+  originalTotalPercentage?: number
 ): number {
-  if (desiredTotalWeight === null) {
-    return recipe.baseFlourWeight;
-  }
-
-  const totalPercentage = recipe.ingredients.reduce(
+  const currentTotalPercentage = recipe.ingredients.reduce(
     (sum, ingredient) => {
       if (ingredient.amountHint) return sum;
       return sum + ingredient.percentage;
@@ -16,7 +13,15 @@ export function calculateFlourWeight(
     0
   );
 
-  return (desiredTotalWeight * 100) / totalPercentage;
+  if (desiredTotalWeight === null) {
+    // Use the original total percentage to determine the baseline total dough weight
+    const baselinePercentage = originalTotalPercentage ?? currentTotalPercentage;
+    const defaultTotalWeight = (recipe.baseFlourWeight * baselinePercentage) / 100;
+    // Recalculate flour weight to maintain this total with current percentages
+    return (defaultTotalWeight * 100) / currentTotalPercentage;
+  }
+
+  return (desiredTotalWeight * 100) / currentTotalPercentage;
 }
 
 export function calculateIngredientWeight(
@@ -78,7 +83,10 @@ export function calculateIngredientsWithPreferment(
 ): CalculatedIngredientWithPreferment[] {
   const contribution = calculatePrefermentContribution(preferment);
   
-  return ingredients.map(ingredient => {
+  const firstFlourIndex = ingredients.findIndex(i => i.type === 'flour' && !i.amountHint);
+  const firstLiquidIndex = ingredients.findIndex(i => i.type === 'liquid' && !i.amountHint);
+  
+  return ingredients.map((ingredient, index) => {
     if (ingredient.amountHint) {
       return {
         ...ingredient,
@@ -93,9 +101,9 @@ export function calculateIngredientsWithPreferment(
     const roundedWeight = roundIngredientAmount(rawWeight);
     
     let deduction = 0;
-    if (ingredient.type === 'flour' && contribution.flour > 0) {
+    if (index === firstFlourIndex && contribution.flour > 0) {
       deduction = contribution.flour;
-    } else if (ingredient.type === 'liquid' && ingredient.id === 'water' && contribution.water > 0) {
+    } else if (index === firstLiquidIndex && contribution.water > 0) {
       deduction = contribution.water;
     }
     

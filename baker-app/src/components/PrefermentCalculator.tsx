@@ -12,8 +12,8 @@ export default function PrefermentCalculator({
   onPrefermentChange
 }: PrefermentCalculatorProps) {
   const [weightInput, setWeightInput] = useState('');
-  const [hydrationInput, setHydrationInput] = useState('100');
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [hydration, setHydration] = useState(100);
+  const [showDetails, setShowDetails] = useState(false);
 
   const contribution: PrefermentContribution = calculatePrefermentContribution(preferment);
 
@@ -28,102 +28,63 @@ export default function PrefermentCalculator({
 
     const weight = parseFloat(value);
     if (!isNaN(weight) && weight > 0) {
-      const hydration = parseFloat(hydrationInput) || 100;
       onPrefermentChange({ weight, hydration });
     }
   };
 
   const handleHydrationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setHydrationInput(value);
-
-    if (weightInput.trim() === '') return;
-
-    const hydration = parseFloat(value);
-    const weight = parseFloat(weightInput);
-    if (!isNaN(hydration) && hydration > 0 && !isNaN(weight) && weight > 0) {
-      onPrefermentChange({ weight, hydration });
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value) && value > 0) {
+      setHydration(value);
+      if (preferment) {
+        onPrefermentChange({ ...preferment, hydration: value });
+      }
     }
-  };
-
-  const handleClear = () => {
-    setWeightInput('');
-    setHydrationInput('100');
-    onPrefermentChange(null);
   };
 
   return (
     <div className="bg-white p-5 rounded-lg border border-stone-200 mt-4">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between text-left"
-      >
-        <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide">
+      <div className="flex items-center gap-3">
+        <label className="text-sm font-medium text-stone-500 uppercase tracking-wide whitespace-nowrap">
           Preferment
-        </h2>
-        <span className="text-stone-400 text-sm">
-          {isExpanded ? '−' : '+'}
-        </span>
-      </button>
-
-      {isExpanded && (
-        <div className="mt-4 space-y-4">
-          <div>
-            <label className="block text-sm text-stone-600 mb-2">
-              Preferment weight (grams)
-            </label>
-            <input
-              type="text"
-              value={weightInput}
-              onChange={handleWeightChange}
-              className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent"
-              placeholder="e.g., 200"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-stone-600 mb-2">
-              Hydration (%)
-            </label>
-            <input
-              type="text"
-              value={hydrationInput}
-              onChange={handleHydrationChange}
-              className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent"
-              placeholder="100"
-            />
-          </div>
-
-          {preferment && preferment.weight > 0 && (
-            <>
-              <div className="pt-4 border-t border-stone-100">
-                <div className="text-xs text-stone-400 mb-2">Preferment contains:</div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center p-2 bg-stone-50 rounded">
-                    <div className="text-xs text-stone-400">Flour</div>
-                    <div className="text-sm font-medium text-stone-900">{contribution.flour}g</div>
-                  </div>
-                  <div className="text-center p-2 bg-stone-50 rounded">
-                    <div className="text-xs text-stone-400">Water</div>
-                    <div className="text-sm font-medium text-stone-900">{contribution.water}g</div>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleClear}
-                className="w-full text-sm text-stone-400 hover:text-stone-600 transition-colors"
-              >
-                Clear preferment
-              </button>
-            </>
-          )}
+        </label>
+        <div className="flex-1">
+          <input
+            type="text"
+            value={weightInput}
+            onChange={handleWeightChange}
+            className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent text-sm"
+            placeholder="grams"
+          />
         </div>
-      )}
+      </div>
 
-      {!isExpanded && preferment && preferment.weight > 0 && (
-        <div className="mt-2 text-sm text-stone-500">
-          {preferment.weight}g at {preferment.hydration}% hydration
+      {preferment && preferment.weight > 0 && (
+        <div className="mt-3">
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="text-xs text-stone-400 hover:text-stone-600 transition-colors"
+          >
+            {showDetails ? 'Hide details' : 'Show details'}
+          </button>
+
+          {showDetails && (
+            <div className="mt-3 pt-3 border-t border-stone-100 space-y-3">
+              <div className="flex items-center gap-3">
+                <label className="text-xs text-stone-500 whitespace-nowrap">Hydration %</label>
+                <input
+                  type="text"
+                  value={hydration}
+                  onChange={handleHydrationChange}
+                  className="w-20 px-2 py-1 border border-stone-200 rounded text-sm text-center"
+                />
+              </div>
+              <div className="flex gap-4 text-xs text-stone-500">
+                <span>Flour: {contribution.flour}g</span>
+                <span>Liquid: {contribution.water}g</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

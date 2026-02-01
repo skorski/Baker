@@ -2,7 +2,6 @@ export interface Recipe {
   id: string;
   name: string;
   baseFlourWeight: number;
-  hydrationHint?: string | number;
   targetUnit?: string;
   defaultDoughComposition?: Record<string, number>;
   ingredients: Ingredient[];
@@ -54,6 +53,7 @@ export interface Step {
   dependencies?: string[];
   after?: string;
   combine?: { ingredientId: string }[];
+  ingredients?: string[];
 }
 
 export type TechniqueType =
