@@ -146,6 +146,11 @@ export default function RecipeTree({ ingredients, steps, completedSteps, onStepT
     }
   }
 
+  // Filter out completed steps for display
+  const visibleStepIndices = steps
+    .map((step, idx) => ({ step, idx }))
+    .filter(({ step }) => !completedSteps.includes(step.id));
+
   return (
     <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
       <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide p-5 pb-3">
@@ -153,17 +158,32 @@ export default function RecipeTree({ ingredients, steps, completedSteps, onStepT
       </h2>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr>
+              <th className="p-2 px-4 border-b border-r border-stone-200 bg-stone-100 text-left text-xs font-medium text-stone-500 uppercase tracking-wide sticky left-0 z-10 min-w-[160px]">
+                Ingredient
+              </th>
+              {visibleStepIndices.map(({ step, idx }) => (
+                <th 
+                  key={step.id}
+                  className="p-2 px-3 border-b border-r border-stone-200 last:border-r-0 bg-stone-100 text-center text-xs font-medium text-stone-500 uppercase tracking-wide min-w-[100px]"
+                >
+                  Step {idx + 1}
+                </th>
+              ))}
+            </tr>
+          </thead>
           <tbody>
             {orderedIngredients.map((ing, rowIndex) => (
               <tr key={ing.id}>
-                {/* Ingredient column */}
-                <td className="p-2 px-4 border-t border-r border-stone-200 bg-stone-50 whitespace-nowrap align-middle min-w-[160px]">
+                {/* Ingredient column - sticky */}
+                <td className="p-2 px-4 border-t border-r border-stone-200 bg-stone-50 whitespace-nowrap align-middle min-w-[160px] sticky left-0 z-10">
                   <div className="text-stone-900 text-sm">{ing.name}</div>
                   <div className="text-xs text-stone-400">{ing.finalDisplayWeight}</div>
                 </td>
                 
-                {/* Action columns */}
-                {steps.map((_, colIndex) => {
+                {/* Action columns - only visible (non-completed) steps */}
+                {visibleStepIndices.map(({ idx: colIndex }) => {
                   const cell = cellMap[rowIndex][colIndex];
                   
                   if (cell.type === 'spanned') {
