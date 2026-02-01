@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowCounterClockwise, CheckCircle, CaretDown, FloppyDisk } from '@phosphor-icons/react';
 import type { Recipe, Preferment, Ingredient } from '../types/recipe';
@@ -9,7 +10,7 @@ import ScalingCalculator from './ScalingCalculator';
 import PrefermentCalculator from './PrefermentCalculator';
 import IngredientList from './IngredientList';
 import RecipeTree from './RecipeTree';
-import recipesData from '../data/recipes.json';
+import { getRecipeById } from '../data/recipeLoader';
 
 function formatSource(recipe: Recipe): string | null {
   if (recipe.source) return recipe.source;
@@ -27,11 +28,14 @@ function formatSource(recipe: Recipe): string | null {
 const defaultProductQuantities = (): ProductQuantity[] => 
   doughProducts.map(p => ({ productId: p.id, quantity: 0 }));
 
+const defaultProductQuantities = (): ProductQuantity[] => 
+  doughProducts.map(p => ({ productId: p.id, quantity: 0 }));
+
 export type PercentageOverrides = Record<string, number>;
 
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
-  const recipe = (recipesData.recipes as unknown as Recipe[]).find(r => r.id === id);
+  const recipe = id ? getRecipeById(id) : undefined;
 
   const [desiredTotalWeight, setDesiredTotalWeight] = useState<number | null>(null);
   const [preferment, setPreferment] = useState<Preferment | null>(null);
