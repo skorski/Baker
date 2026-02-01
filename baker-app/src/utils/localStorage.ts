@@ -1,11 +1,22 @@
 const STORAGE_KEY_PREFIX = 'baker-app';
 
+export interface ProductQuantity {
+  productId: string;
+  quantity: number;
+}
+
+export type ScaleMode = 'products' | 'grams' | 'manual';
+
 export interface RecipeProgress {
   completedSteps: string[];
   percentageOverrides: Record<string, number>;
   wholeWheatPercent: number | null;
   preferment: { weight: number; hydration: number } | null;
   desiredTotalWeight: number | null;
+  productQuantities: ProductQuantity[];
+  scaleMode: ScaleMode;
+  gramsInput: string;
+  manualInput: string;
 }
 
 function getStorageKey(recipeId: string): string {

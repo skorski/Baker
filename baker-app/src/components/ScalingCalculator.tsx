@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { validateTotalWeight } from '../utils/calculations';
 import { doughProducts } from '../data/doughProducts';
+import type { ProductQuantity, ScaleMode } from '../utils/localStorage';
 
 interface ScalingCalculatorProps {
   desiredTotalWeight: number | null;
@@ -8,29 +9,30 @@ interface ScalingCalculatorProps {
   totalPercentage: number;
   onTotalWeightChange: (weight: number | null) => void;
   isScaled: boolean;
+  productQuantities: ProductQuantity[];
+  onProductQuantitiesChange: (quantities: ProductQuantity[]) => void;
+  scaleMode: ScaleMode;
+  onScaleModeChange: (mode: ScaleMode) => void;
+  gramsInput: string;
+  onGramsInputChange: (value: string) => void;
+  manualInput: string;
+  onManualInputChange: (value: string) => void;
 }
-
-interface ProductQuantity {
-  productId: string;
-  quantity: number;
-}
-
-type ScaleMode = 'products' | 'grams' | 'manual';
 
 export default function ScalingCalculator({
   flourWeight,
   totalPercentage,
   onTotalWeightChange,
-  isScaled
+  isScaled,
+  productQuantities,
+  onProductQuantitiesChange,
+  scaleMode,
+  onScaleModeChange,
+  gramsInput,
+  onGramsInputChange,
+  manualInput,
+  onManualInputChange
 }: ScalingCalculatorProps) {
-  const [productQuantities, setProductQuantities] = useState<ProductQuantity[]>(
-    doughProducts.map(p => ({ productId: p.id, quantity: 0 }))
-  );
-  const [scaleMode, setScaleMode] = useState<ScaleMode>('products');
-  const [gramsInput, setGramsInput] = useState('');
-  const [manualInput, setManualInput] = useState('');
-  const [error, setError] = useState<string>('');
-
   const calculatedTotal = useMemo(() => {
     return productQuantities.reduce((sum, pq) => {
       const product = doughProducts.find(p => p.id === pq.productId);
@@ -52,8 +54,8 @@ export default function ScalingCalculator({
   }, [calculatedTotal, scaleMode, onTotalWeightChange]);
 
   const handleQuantityChange = (productId: string, delta: number) => {
-    setProductQuantities(prev =>
-      prev.map(pq =>
+    onProductQuantitiesChange(
+      productQuantities.map(pq =>
         pq.productId === productId
           ? { ...pq, quantity: Math.max(0, pq.quantity + delta) }
           : pq
@@ -63,8 +65,8 @@ export default function ScalingCalculator({
 
   const handleSetQuantity = (productId: string, value: string) => {
     const num = parseInt(value, 10);
-    setProductQuantities(prev =>
-      prev.map(pq =>
+    onProductQuantitiesChange(
+      productQuantities.map(pq =>
         pq.productId === productId
           ? { ...pq, quantity: isNaN(num) ? 0 : Math.max(0, num) }
           : pq
@@ -72,67 +74,44 @@ export default function ScalingCalculator({
     );
   };
 
-  const handleGramsInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGramsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setGramsInput(value);
+    onGramsInputChange(value);
 
     if (value.trim() === '') {
       onTotalWeightChange(null);
-      setError('');
       return;
     }
 
     const result = validateTotalWeight(value);
     if (result.valid) {
       onTotalWeightChange(result.value);
-      setError('');
-    } else {
-      const errorMessages = {
-        empty: 'Please enter a dough weight',
-        'non-numeric': 'Please enter a valid number',
-        'zero-or-negative': 'Weight must be greater than 0',
-        'too-small': 'Warning: Very small batch',
-        'too-large': 'Warning: Very large batch'
-      };
-      setError(errorMessages[result.error]);
     }
   };
 
-  const handleManualInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleManualChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setManualInput(value);
+    onManualInputChange(value);
 
     if (value.trim() === '') {
       onTotalWeightChange(calculatedTotal > 0 ? calculatedTotal : null);
-      setError('');
       return;
     }
 
     const result = validateTotalWeight(value);
     if (result.valid) {
       onTotalWeightChange(result.value);
-      setError('');
-    } else {
-      const errorMessages = {
-        empty: 'Please enter a dough weight',
-        'non-numeric': 'Please enter a valid number',
-        'zero-or-negative': 'Weight must be greater than 0',
-        'too-small': 'Warning: Very small batch',
-        'too-large': 'Warning: Very large batch'
-      };
-      setError(errorMessages[result.error]);
     }
   };
 
   const handleModeChange = (mode: ScaleMode) => {
-    setScaleMode(mode);
-    setError('');
+    onScaleModeChange(mode);
     if (mode === 'products') {
-      setGramsInput('');
-      setManualInput('');
+      onGramsInputChange('');
+      onManualInputChange('');
       onTotalWeightChange(calculatedTotal > 0 ? calculatedTotal : null);
     } else if (mode === 'grams') {
-      setManualInput('');
+      onManualInputChange('');
       if (gramsInput.trim()) {
         const result = validateTotalWeight(gramsInput);
         if (result.valid) onTotalWeightChange(result.value);
@@ -140,7 +119,7 @@ export default function ScalingCalculator({
         onTotalWeightChange(null);
       }
     } else if (mode === 'manual') {
-      setGramsInput('');
+      onGramsInputChange('');
       if (manualInput.trim()) {
         const result = validateTotalWeight(manualInput);
         if (result.valid) onTotalWeightChange(result.value);
@@ -151,7 +130,7 @@ export default function ScalingCalculator({
   };
 
   const clearAllProducts = () => {
-    setProductQuantities(prev => prev.map(pq => ({ ...pq, quantity: 0 })));
+    onProductQuantitiesChange(productQuantities.map(pq => ({ ...pq, quantity: 0 })));
   };
 
   return (
@@ -243,11 +222,10 @@ export default function ScalingCalculator({
             type="text"
             inputMode="decimal"
             value={gramsInput}
-            onChange={handleGramsInputChange}
+            onChange={handleGramsChange}
             className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent"
             placeholder="e.g., 1500"
           />
-          {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
         </div>
       )}
 
@@ -261,11 +239,10 @@ export default function ScalingCalculator({
             type="text"
             inputMode="decimal"
             value={manualInput}
-            onChange={handleManualInputChange}
+            onChange={handleManualChange}
             className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent"
             placeholder="e.g., 1500"
           />
-          {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
         </div>
       )}
 

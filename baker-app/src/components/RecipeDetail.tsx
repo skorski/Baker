@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowCounterClockwise } from '@phosphor-icons/react';
 import type { Recipe, Preferment, Ingredient } from '../types/recipe';
 import { calculateFlourWeight, calculateIngredientsWithPreferment } from '../utils/calculations';
-import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, type RecipeProgress } from '../utils/localStorage';
+import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, type RecipeProgress, type ProductQuantity, type ScaleMode } from '../utils/localStorage';
+import { doughProducts } from '../data/doughProducts';
 import ScalingCalculator from './ScalingCalculator';
 import PrefermentCalculator from './PrefermentCalculator';
 import IngredientList from './IngredientList';
@@ -23,6 +24,9 @@ function formatSource(recipe: Recipe): string | null {
   return null;
 }
 
+const defaultProductQuantities = (): ProductQuantity[] => 
+  doughProducts.map(p => ({ productId: p.id, quantity: 0 }));
+
 export type PercentageOverrides = Record<string, number>;
 
 export default function RecipeDetail() {
@@ -34,6 +38,10 @@ export default function RecipeDetail() {
   const [percentageOverrides, setPercentageOverrides] = useState<PercentageOverrides>({});
   const [wholeWheatPercent, setWholeWheatPercent] = useState<number | null>(null);
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const [productQuantities, setProductQuantities] = useState<ProductQuantity[]>(defaultProductQuantities);
+  const [scaleMode, setScaleMode] = useState<ScaleMode>('products');
+  const [gramsInput, setGramsInput] = useState('');
+  const [manualInput, setManualInput] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load saved progress from localStorage
@@ -46,6 +54,10 @@ export default function RecipeDetail() {
       setWholeWheatPercent(saved.wholeWheatPercent ?? null);
       setPreferment(saved.preferment ?? null);
       setDesiredTotalWeight(saved.desiredTotalWeight ?? null);
+      setProductQuantities(saved.productQuantities?.length ? saved.productQuantities : defaultProductQuantities());
+      setScaleMode(saved.scaleMode || 'products');
+      setGramsInput(saved.gramsInput || '');
+      setManualInput(saved.manualInput || '');
     }
     setIsLoaded(true);
   }, [id]);
@@ -58,10 +70,14 @@ export default function RecipeDetail() {
       percentageOverrides,
       wholeWheatPercent,
       preferment,
-      desiredTotalWeight
+      desiredTotalWeight,
+      productQuantities,
+      scaleMode,
+      gramsInput,
+      manualInput
     };
     saveRecipeProgress(id, progress);
-  }, [id, isLoaded, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight]);
+  }, [id, isLoaded, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput]);
 
   const handleStepToggle = useCallback((stepId: string) => {
     setCompletedSteps(prev =>
@@ -78,6 +94,10 @@ export default function RecipeDetail() {
     setWholeWheatPercent(null);
     setPreferment(null);
     setDesiredTotalWeight(null);
+    setProductQuantities(defaultProductQuantities());
+    setScaleMode('products');
+    setGramsInput('');
+    setManualInput('');
     clearRecipeProgress(id);
   }, [id]);
 
@@ -226,7 +246,10 @@ export default function RecipeDetail() {
     Object.keys(percentageOverrides).length > 0 || 
     wholeWheatPercent !== null || 
     preferment !== null || 
-    desiredTotalWeight !== null;
+    desiredTotalWeight !== null ||
+    productQuantities.some(pq => pq.quantity > 0) ||
+    gramsInput !== '' ||
+    manualInput !== '';
 
   return (
     <div className="container mx-auto px-6 py-12 max-w-5xl">
@@ -259,6 +282,14 @@ export default function RecipeDetail() {
             totalPercentage={totalPercentage}
             onTotalWeightChange={setDesiredTotalWeight}
             isScaled={desiredTotalWeight !== null}
+            productQuantities={productQuantities}
+            onProductQuantitiesChange={setProductQuantities}
+            scaleMode={scaleMode}
+            onScaleModeChange={setScaleMode}
+            gramsInput={gramsInput}
+            onGramsInputChange={setGramsInput}
+            manualInput={manualInput}
+            onManualInputChange={setManualInput}
           />
           <PrefermentCalculator
             preferment={preferment}
