@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowCounterClockwise, CheckCircle, CaretDown, FloppyDisk } from '@phosphor-icons/react';
 import type { Recipe, Preferment, Ingredient } from '../types/recipe';
@@ -24,9 +23,6 @@ function formatSource(recipe: Recipe): string | null {
   }
   return null;
 }
-
-const defaultProductQuantities = (): ProductQuantity[] => 
-  doughProducts.map(p => ({ productId: p.id, quantity: 0 }));
 
 const defaultProductQuantities = (): ProductQuantity[] => 
   doughProducts.map(p => ({ productId: p.id, quantity: 0 }));
