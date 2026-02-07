@@ -1,0 +1,125 @@
+{
+  "id": "bagels",
+  "name": "Bagels",
+  "baseFlourWeight": 625,
+  "targetUnit": "bagel",
+  "defaultDoughComposition": { "bagel": 7 },
+  "ingredients": [
+    { "id": "bread_flour", "name": "Bread flour", "percentage": 100, "type": "flour" },
+    { "id": "water", "name": "Water", "percentage": 48.8, "type": "liquid" },
+    { "id": "sugar", "name": "Sugar", "percentage": 4, "type": "sugar" },
+    { "id": "vegetable_oil", "name": "Vegetable oil", "percentage": 2.72, "type": "fat" },
+    { "id": "fine_salt", "name": "Fine salt", "percentage": 2.08, "type": "salt" },
+    { "id": "malt_syrup", "name": "Malt syrup", "percentage": 2.08, "type": "enrichment" },
+    { "id": "instant_dry_yeast", "name": "Instant dry yeast", "percentage": 0.24, "type": "yeast" },
+    { "id": "lye_solution", "name": "Lye solution (4000g water + 6g lye)", "percentage": 0, "type": "enrichment", "amountHint": "as needed" },
+    { "id": "bagel_toppings", "name": "Salt, seeds, or other toppings", "percentage": 0, "type": "mix-in", "amountHint": "as needed" }
+  ],
+  "steps": [
+    {
+      "id": "mix",
+      "title": "Mix Dough",
+      "description": "Combine all dough ingredients. Mix until a homogeneous mass forms, then continue mixing to full gluten development. Dough should be stiff and elastic.",
+      "technique": "machine mix",
+      "activeMinutes": 12,
+      "ingredients": ["bread_flour", "water", "sugar", "vegetable_oil", "fine_salt", "malt_syrup", "instant_dry_yeast"]
+    },
+    {
+      "id": "bulk_ferment",
+      "after": "mix",
+      "title": "Bulk Fermentation",
+      "description": "Ferment dough, covered. No folds.",
+      "technique": "bulk ferment",
+      "passiveMinutes": 60
+    },
+    {
+      "id": "divide",
+      "after": "bulk_ferment",
+      "title": "Divide",
+      "description": "Divide dough into 140g portions.",
+      "technique": "shaping",
+      "activeMinutes": 3
+    },
+    {
+      "id": "preshape",
+      "after": "divide",
+      "title": "Preshape",
+      "description": "Roll each portion into a tight rope.",
+      "technique": "shaping",
+      "activeMinutes": 4
+    },
+    {
+      "id": "bench_rest",
+      "after": "preshape",
+      "title": "Bench Rest",
+      "description": "Allow dough to rest, covered.",
+      "technique": "proofing",
+      "passiveMinutes": 20
+    },
+    {
+      "id": "shape",
+      "after": "bench_rest",
+      "title": "Shape Bagels",
+      "description": "Shape ropes into rings and seal ends firmly.",
+      "technique": "shaping",
+      "activeMinutes": 4
+    },
+    {
+      "id": "cold_proof",
+      "after": "shape",
+      "title": "Cold Proof",
+      "description": "Cold proof shaped bagels on parchment-lined sheet pans in the refrigerator.",
+      "technique": "proofing",
+      "temperatureC": 4,
+      "passiveMinutes": 900
+    },
+    {
+      "id": "prepare_lye",
+      "after": "cold_proof",
+      "title": "Prepare Lye Solution",
+      "description": "Dissolve lye completely in water. Use gloves and eye protection when handling lye.",
+      "technique": "mixing",
+      "activeMinutes": 5,
+      "ingredients": ["lye_solution"]
+    },
+    {
+      "id": "boil",
+      "after": "prepare_lye",
+      "title": "Boil Bagels",
+      "description": "Bring lye solution to a gentle boil. Boil bagels 30 seconds per side. Remove and drain.",
+      "technique": "baking",
+      "activeMinutes": 10
+    },
+    {
+      "id": "top",
+      "after": "boil",
+      "title": "Apply Toppings",
+      "description": "Apply toppings immediately after boiling.",
+      "technique": "scoring",
+      "activeMinutes": 2,
+      "ingredients": ["bagel_toppings"]
+    },
+    {
+      "id": "bake",
+      "after": "top",
+      "title": "Bake",
+      "description": "Bake in a convection oven at 190°C (375°F) until deeply browned.",
+      "technique": "baking",
+      "activeMinutes": 5,
+      "passiveMinutes": 15
+    }
+  ],
+  "baking": {
+    "temperatureF": 375,
+    "timeMinutes": 15,
+    "container": "sheet-pan"
+  },
+  "tagline": "Boiled, baked, perfectly chewy",
+  "notes": "Lye produces a darker crust and characteristic bagel flavor. Dough is intentionally stiff; avoid adding water. Cold proof is essential for flavor and surface integrity. Use gloves and eye protection when handling lye.",
+  "sources": [
+    {
+      "title": "Modernist Bread",
+      "volume": 6
+    }
+  ]
+}

@@ -2,6 +2,7 @@ const STORAGE_KEY_PREFIX = 'baker-app';
 const HISTORY_KEY_PREFIX = 'baker-app-history';
 const VERSION_KEY_PREFIX = 'baker-app-version';
 const DEFAULT_VERSION_KEY_PREFIX = 'baker-app-default-version';
+const PRODUCT_WEIGHTS_KEY = 'baker-app-product-weights';
 
 export interface ProductQuantity {
   productId: string;
@@ -368,6 +369,28 @@ export function downloadAsJson(data: unknown, filename: string): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// === PRODUCT WEIGHT OVERRIDES ===
+
+export type ProductWeightOverrides = Record<string, number>;
+
+export function loadProductWeightOverrides(): ProductWeightOverrides {
+  try {
+    const stored = localStorage.getItem(PRODUCT_WEIGHTS_KEY);
+    if (!stored) return {};
+    return JSON.parse(stored) as ProductWeightOverrides;
+  } catch {
+    return {};
+  }
+}
+
+export function saveProductWeightOverrides(overrides: ProductWeightOverrides): void {
+  try {
+    localStorage.setItem(PRODUCT_WEIGHTS_KEY, JSON.stringify(overrides));
+  } catch {
+    // Storage unavailable - silently fail
+  }
 }
 
 export function formatShortDate(isoString: string): string {

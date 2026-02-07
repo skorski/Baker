@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { validateTotalWeight } from '../utils/calculations';
 import { doughProducts } from '../data/doughProducts';
+import { loadProductWeightOverrides } from '../utils/localStorage';
 import type { ProductQuantity, ScaleMode } from '../utils/localStorage';
 
 interface ScalingCalculatorProps {
@@ -33,12 +34,17 @@ export default function ScalingCalculator({
   manualInput,
   onManualInputChange
 }: ScalingCalculatorProps) {
+  const weightOverrides = useMemo(() => loadProductWeightOverrides(), []);
+
+  const getEffectiveWeight = (product: typeof doughProducts[0]) =>
+    weightOverrides[product.id] ?? product.weightGrams;
+
   const calculatedTotal = useMemo(() => {
     return productQuantities.reduce((sum, pq) => {
       const product = doughProducts.find(p => p.id === pq.productId);
-      return sum + (product ? product.weightGrams * pq.quantity : 0);
+      return sum + (product ? getEffectiveWeight(product) * pq.quantity : 0);
     }, 0);
-  }, [productQuantities]);
+  }, [productQuantities, weightOverrides]);
 
   const hasAnyProducts = productQuantities.some(pq => pq.quantity > 0);
 
@@ -173,7 +179,7 @@ export default function ScalingCalculator({
                 >
                   <div>
                     <div className="text-sm font-medium text-stone-900">{product.name}</div>
-                    <div className="text-xs text-stone-400">{product.weightGrams}g each</div>
+                    <div className="text-xs text-stone-400">{getEffectiveWeight(product)}g each</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button

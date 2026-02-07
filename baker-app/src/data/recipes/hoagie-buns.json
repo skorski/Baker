@@ -1,0 +1,117 @@
+{
+  "id": "hoagie-buns",
+  "name": "Hoagie Buns",
+  "baseFlourWeight": 620,
+  "targetUnit": "roll",
+  "defaultDoughComposition": { "roll": 8 },
+  "ingredients": [
+    { "id": "bread_flour", "name": "Bread flour", "percentage": 100, "type": "flour" },
+    { "id": "water", "name": "Water", "percentage": 58.06, "type": "liquid" },
+    { "id": "pate_fermentee", "name": "Pâte fermentée", "percentage": 22.98, "type": "leavening" },
+    { "id": "sugar", "name": "Sugar", "percentage": 1.94, "type": "sugar" },
+    { "id": "vegetable_oil", "name": "Vegetable oil", "percentage": 1.94, "type": "fat" },
+    { "id": "fine_salt", "name": "Fine salt", "percentage": 0.97, "type": "salt" },
+    { "id": "instant_dry_yeast", "name": "Instant dry yeast", "percentage": 0.97, "type": "yeast" },
+    { "id": "malt_syrup", "name": "Malt syrup", "percentage": 0.65, "type": "enrichment" },
+    { "id": "egg_wash", "name": "Egg wash", "percentage": 0, "type": "egg", "amountHint": "as needed" }
+  ],
+  "steps": [
+    {
+      "id": "prepare_preferment",
+      "title": "Prepare Preferment",
+      "description": "Mix 85g of the bread flour, 50g water, 2g sugar, 2g oil, 2g salt, and 1g yeast on medium speed to full gluten development. Ferment in an airtight container for 12 hours in the refrigerator.",
+      "technique": "mixing",
+      "activeMinutes": 5,
+      "passiveMinutes": 720,
+      "ingredients": ["bread_flour", "water", "sugar", "vegetable_oil", "fine_salt", "instant_dry_yeast"]
+    },
+    {
+      "id": "mix_final_dough",
+      "after": "prepare_preferment",
+      "title": "Mix Final Dough",
+      "description": "Combine remaining flour, water, sugar, oil, salt, yeast, malt syrup, and pâte fermentée with the preferment. Mix on medium speed until full gluten development.",
+      "technique": "machine mix",
+      "activeMinutes": 12,
+      "ingredients": ["bread_flour", "water", "sugar", "vegetable_oil", "fine_salt", "instant_dry_yeast", "malt_syrup", "pate_fermentee"]
+    },
+    {
+      "id": "bulk_ferment",
+      "after": "mix_final_dough",
+      "title": "Bulk Fermentation",
+      "description": "Ferment dough lightly oiled and covered. No folds.",
+      "technique": "bulk ferment",
+      "passiveMinutes": 90
+    },
+    {
+      "id": "divide",
+      "after": "bulk_ferment",
+      "title": "Divide",
+      "description": "Divide dough into 125g portions.",
+      "technique": "shaping",
+      "activeMinutes": 3
+    },
+    {
+      "id": "preshape",
+      "after": "divide",
+      "title": "Preshape",
+      "description": "Preshape each portion into a short bâtard.",
+      "technique": "shaping",
+      "activeMinutes": 7
+    },
+    {
+      "id": "bench_rest",
+      "after": "preshape",
+      "title": "Bench Rest",
+      "description": "Rest preshaped dough, covered.",
+      "technique": "proofing",
+      "passiveMinutes": 20
+    },
+    {
+      "id": "shape",
+      "after": "bench_rest",
+      "title": "Final Shape",
+      "description": "Shape into hoagie-style bâtards and place on parchment-lined sheet pans.",
+      "technique": "shaping",
+      "activeMinutes": 7
+    },
+    {
+      "id": "final_proof",
+      "after": "shape",
+      "title": "Final Proof",
+      "description": "Proof at 27°C and 65% RH until fully aerated.",
+      "technique": "proofing",
+      "temperatureC": 27,
+      "passiveMinutes": 60
+    },
+    {
+      "id": "score",
+      "after": "final_proof",
+      "title": "Score",
+      "description": "Apply egg wash if desired, then score each bun with a single cut down the center.",
+      "technique": "scoring",
+      "activeMinutes": 2,
+      "ingredients": ["egg_wash"]
+    },
+    {
+      "id": "bake",
+      "after": "score",
+      "title": "Bake",
+      "description": "Bake in a convection oven at 190°C (375°F) for 20–25 minutes until golden. Buns should remain soft with a thin crust.",
+      "technique": "baking",
+      "activeMinutes": 5,
+      "passiveMinutes": 25
+    }
+  ],
+  "baking": {
+    "temperatureF": 375,
+    "timeMinutes": 25,
+    "container": "sheet-pan"
+  },
+  "tagline": "Crusty outside, pillowy inside",
+  "notes": "Apply egg wash before scoring if desired. Preferment provides strength and mild acidity. Buns should remain soft with a thin crust. Preferment uses 85g of the total 620g bread flour.",
+  "sources": [
+    {
+      "title": "Modernist Bread"
+    }
+  ]
+}

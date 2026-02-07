@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { X, Export, DownloadSimple, UploadSimple } from '@phosphor-icons/react';
-import { exportData, importData, downloadAsJson, type ExportData } from '../utils/localStorage';
+import { exportData, importData, downloadAsJson, loadProductWeightOverrides, saveProductWeightOverrides, type ExportData } from '../utils/localStorage';
+import { doughProducts } from '../data/doughProducts';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [exportOption, setExportOption] = useState<ExportOption>('both');
   const [importOption, setImportOption] = useState<ExportOption>('both');
   const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [weightOverrides, setWeightOverrides] = useState(() => loadProductWeightOverrides());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -79,6 +81,66 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
 
         <div className="p-4 space-y-6">
+          {/* Product Weights Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-stone-700">
+              <span className="text-lg">⚖️</span>
+              <h3 className="font-medium">Product Weights</h3>
+            </div>
+            <p className="text-xs text-stone-400">Override default weights for each product type (grams).</p>
+            <div className="space-y-2">
+              {doughProducts.map(product => {
+                const currentWeight = weightOverrides[product.id] ?? product.weightGrams;
+                const isOverridden = weightOverrides[product.id] !== undefined;
+                return (
+                  <div key={product.id} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span>{product.icon}</span>
+                      <span className="text-sm text-stone-700 truncate">{product.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        value={currentWeight}
+                        onChange={e => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val) && val > 0) {
+                            const next = { ...weightOverrides, [product.id]: val };
+                            setWeightOverrides(next);
+                            saveProductWeightOverrides(next);
+                          }
+                        }}
+                        className={`w-20 px-2 py-1 text-sm text-right border rounded-md ${
+                          isOverridden
+                            ? 'border-amber-400 bg-amber-50 text-amber-800'
+                            : 'border-stone-200 text-stone-700'
+                        }`}
+                        min={1}
+                      />
+                      <span className="text-xs text-stone-400">g</span>
+                      {isOverridden && (
+                        <button
+                          onClick={() => {
+                            const next = { ...weightOverrides };
+                            delete next[product.id];
+                            setWeightOverrides(next);
+                            saveProductWeightOverrides(next);
+                          }}
+                          className="text-xs text-stone-400 hover:text-stone-600 px-1"
+                          title={`Reset to ${product.weightGrams}g`}
+                        >
+                          ↺
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <hr className="border-stone-200" />
+
           {/* Export Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-stone-700">

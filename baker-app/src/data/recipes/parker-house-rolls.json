@@ -1,0 +1,108 @@
+{
+  "id": "parker-house-rolls",
+  "name": "Parker House Rolls",
+  "baseFlourWeight": 480,
+  "targetUnit": "roll",
+  "defaultDoughComposition": { "roll": 12 },
+  "ingredients": [
+    { "id": "bread_flour", "name": "Bread flour", "percentage": 100, "type": "flour" },
+    { "id": "whole_milk", "name": "Whole milk (cold)", "percentage": 76.04, "type": "liquid" },
+    { "id": "eggs", "name": "Eggs (cold)", "percentage": 20.83, "type": "enrichment" },
+    { "id": "potato_flakes", "name": "Potato flakes", "percentage": 13.54, "type": "enrichment" },
+    { "id": "butter_softened", "name": "Butter (softened)", "percentage": 12.5, "type": "fat" },
+    { "id": "sugar", "name": "Sugar", "percentage": 11.46, "type": "sugar" },
+    { "id": "fine_salt", "name": "Fine salt", "percentage": 2.08, "type": "salt" },
+    { "id": "instant_osmotolerant_yeast", "name": "Instant osmotolerant yeast", "percentage": 2.08, "type": "yeast" },
+    { "id": "butter_melted", "name": "Butter (melted, for finishing)", "percentage": 20.83, "type": "fat" }
+  ],
+  "steps": [
+    {
+      "id": "mix",
+      "title": "Mix Dough",
+      "description": "Combine all dough ingredients in a mixer bowl. Mix on low speed until yeast is dissolved, then increase to medium speed and mix until full gluten development.",
+      "technique": "machine mix",
+      "activeMinutes": 10,
+      "ingredients": ["bread_flour", "whole_milk", "eggs", "potato_flakes", "butter_softened", "sugar", "fine_salt", "instant_osmotolerant_yeast"]
+    },
+    {
+      "id": "bulk_ferment",
+      "after": "mix",
+      "title": "Bulk Fermentation",
+      "description": "Cover dough and ferment at room temperature. Perform one fold after 30 minutes, then allow to rest.",
+      "technique": "bulk ferment",
+      "activeMinutes": 2,
+      "passiveMinutes": 60
+    },
+    {
+      "id": "divide",
+      "after": "bulk_ferment",
+      "title": "Divide",
+      "description": "Divide dough into 80g portions.",
+      "technique": "shaping",
+      "activeMinutes": 5
+    },
+    {
+      "id": "preshape",
+      "after": "divide",
+      "title": "Preshape",
+      "description": "Preshape portions into loose rounds.",
+      "technique": "shaping",
+      "activeMinutes": 5
+    },
+    {
+      "id": "bench_rest",
+      "after": "preshape",
+      "title": "Bench Rest",
+      "description": "Allow preshaped dough to rest, covered.",
+      "technique": "proofing",
+      "passiveMinutes": 10
+    },
+    {
+      "id": "shape",
+      "after": "bench_rest",
+      "title": "Shape Parker House Rolls",
+      "description": "Roll each piece into an oval, fold in half lengthwise, and place in prepared pan.",
+      "technique": "shaping",
+      "activeMinutes": 7
+    },
+    {
+      "id": "final_proof",
+      "after": "shape",
+      "title": "Final Proof",
+      "description": "Proof at 27°C and 65% RH until rolls are well aerated.",
+      "technique": "proofing",
+      "temperatureC": 27,
+      "passiveMinutes": 90
+    },
+    {
+      "id": "bake",
+      "after": "final_proof",
+      "title": "Bake",
+      "description": "Bake in a convection oven at 190°C (375°F) for 15–20 minutes until golden.",
+      "technique": "baking",
+      "activeMinutes": 5,
+      "passiveMinutes": 20
+    },
+    {
+      "id": "finish",
+      "after": "bake",
+      "title": "Butter Finish",
+      "description": "Brush baked rolls generously with melted butter.",
+      "technique": "scoring",
+      "activeMinutes": 2,
+      "ingredients": ["butter_melted"]
+    }
+  ],
+  "baking": {
+    "temperatureF": 375,
+    "timeMinutes": 20,
+    "container": "sheet-pan"
+  },
+  "tagline": "Buttery, folded, impossibly soft",
+  "notes": "Rolls may be placed close together for soft sides. Brushing with butter immediately after baking improves flavor and crust softness. Dough can be frozen after shaping.",
+  "sources": [
+    {
+      "title": "Modernist Bread"
+    }
+  ]
+}
