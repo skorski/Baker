@@ -1,0 +1,110 @@
+{
+  "id": "sfincione",
+  "name": "Sfincione",
+  "baseFlourWeight": 570,
+  "targetUnit": "pizza 16in",
+  "defaultDoughComposition": { "pizza 16in": 1 },
+  "ingredients": [
+    { "id": "bread_flour", "name": "Bread flour", "percentage": 100, "type": "flour" },
+    { "id": "water", "name": "Water", "percentage": 68.42, "type": "liquid" },
+    { "id": "olive_oil", "name": "Olive oil", "percentage": 5.26, "type": "fat" },
+    { "id": "fine_salt", "name": "Fine salt", "percentage": 1.93, "type": "salt" },
+    { "id": "instant_dry_yeast", "name": "Instant dry yeast", "percentage": 0.88, "type": "yeast" },
+    { "id": "olive_oil_topping", "name": "Olive oil (for pan)", "percentage": 0, "type": "fat", "amountHint": "40g" },
+    { "id": "tomato_sauce", "name": "Tomato sauce", "percentage": 0, "type": "mix-in", "amountHint": "90g" },
+    { "id": "aged_caciocavallo", "name": "Aged caciocavallo cheese (grated)", "percentage": 0, "type": "mix-in", "amountHint": "45g" },
+    { "id": "bread_crumbs", "name": "Bread crumbs (toasted)", "percentage": 0, "type": "mix-in", "amountHint": "30g" }
+  ],
+  "steps": [
+    {
+      "id": "autolyse",
+      "title": "Autolyse",
+      "description": "Combine water and flour to form a shaggy mass. Cover and rest.",
+      "technique": "mixing",
+      "activeMinutes": 5,
+      "passiveMinutes": 30,
+      "ingredients": ["bread_flour", "water"]
+    },
+    {
+      "id": "mix",
+      "after": "autolyse",
+      "title": "Final Mix",
+      "description": "Add yeast and salt, mix until homogeneous. Add olive oil and mix to medium gluten development.",
+      "technique": "machine mix",
+      "activeMinutes": 15,
+      "ingredients": ["instant_dry_yeast", "fine_salt", "olive_oil"]
+    },
+    {
+      "id": "bulk_ferment",
+      "after": "mix",
+      "title": "Bulk Fermentation",
+      "description": "Ferment dough with folds every 30 minutes for the first 90 minutes, then rest until complete.",
+      "technique": "bulk ferment",
+      "activeMinutes": 5,
+      "passiveMinutes": 150
+    },
+    {
+      "id": "preshape",
+      "after": "bulk_ferment",
+      "title": "Preshape",
+      "description": "Preshape dough into a boule.",
+      "technique": "shaping",
+      "activeMinutes": 2
+    },
+    {
+      "id": "bench_rest",
+      "after": "preshape",
+      "title": "Bench Rest",
+      "description": "Rest preshaped dough, covered.",
+      "technique": "proofing",
+      "passiveMinutes": 20
+    },
+    {
+      "id": "shape",
+      "after": "bench_rest",
+      "title": "Pan Shape",
+      "description": "Heavily oil a 38cm pan (5cm deep). Place dough in pan and gently dimple to spread evenly.",
+      "technique": "shaping",
+      "activeMinutes": 12,
+      "ingredients": ["olive_oil_topping"]
+    },
+    {
+      "id": "final_proof",
+      "after": "shape",
+      "title": "Final Proof",
+      "description": "Proof at 27°C and 65% RH until dough is aerated and relaxed.",
+      "technique": "proofing",
+      "temperatureC": 27,
+      "passiveMinutes": 120
+    },
+    {
+      "id": "top",
+      "after": "final_proof",
+      "title": "Apply Toppings",
+      "description": "Spread tomato sauce evenly, sprinkle with cheese, then finish with toasted bread crumbs.",
+      "technique": "scoring",
+      "activeMinutes": 5,
+      "ingredients": ["tomato_sauce", "aged_caciocavallo", "bread_crumbs"]
+    },
+    {
+      "id": "bake",
+      "after": "top",
+      "title": "Bake",
+      "description": "Bake until deeply golden and cooked through. Cool completely before cutting.",
+      "technique": "baking",
+      "activeMinutes": 5,
+      "passiveMinutes": 20
+    }
+  ],
+  "baking": {
+    "temperatureF": 475,
+    "timeMinutes": 20
+  },
+  "tagline": "Sicily's thick, saucy, pan-baked pizza",
+  "notes": "Traditional Sicilian sfincione is thick, airy, and pan-baked. Dimpling preserves gas while evenly distributing dough. Cooling fully before cutting is essential for crumb structure.",
+  "sources": [
+    {
+      "title": "Modernist Bread"
+    }
+  ]
+}

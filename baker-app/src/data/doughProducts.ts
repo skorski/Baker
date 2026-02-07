@@ -27,5 +27,19 @@ export const doughProducts: DoughProduct[] = [
     weightGrams: 685,
     icon: '🍕',
     description: 'Individual pizza base'
+  },
+  {
+    id: 'dutch-oven',
+    name: 'Dutch Oven',
+    weightGrams: 1150,
+    icon: '🥘',
+    description: 'Dutch oven bread'
+  },
+  {
+    id: 'bagel',
+    name: 'Bagel',
+    weightGrams: 120,
+    icon: '🥯',
+    description: 'Bagel'
   }
 ];
