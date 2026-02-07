@@ -68,5 +68,11 @@
       "temperature": "500-550°F"
     }
   ],
+  "baking": {
+    "temperatureF": 500,
+    "timeMinutes": 8,
+    "container": "pizza-stone"
+  },
+  "tagline": "Crispy, chewy, worth the wait",
   "notes": "Cold fermentation produces better flavor and texture. For best results, make dough 1-3 days ahead."
 }

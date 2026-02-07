@@ -111,6 +111,12 @@
       "passiveMinutes": 30
     }
   ],
+  "baking": {
+    "temperatureF": 450,
+    "timeMinutes": 30,
+    "container": "dutch-oven"
+  },
+  "tagline": "Wild yeast, big crust energy",
   "notes": "Diastatic malt is recommended for cold proofing longer than 12 hours. Multiply recipe by two for a miche. Windowpane test is the authoritative gluten development check. DDT 24-26°C (75-78°F).",
   "sources": [
     {
