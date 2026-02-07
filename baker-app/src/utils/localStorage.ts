@@ -10,6 +10,12 @@ export interface ProductQuantity {
 
 export type ScaleMode = 'products' | 'grams' | 'manual';
 
+export interface BakingOverrides {
+  temperatureF?: number;
+  timeMinutes?: number;
+  container?: string;
+}
+
 export interface RecipeProgress {
   completedSteps: string[];
   percentageOverrides: Record<string, number>;
@@ -20,6 +26,7 @@ export interface RecipeProgress {
   scaleMode: ScaleMode;
   gramsInput: string;
   manualInput: string;
+  bakingOverrides?: BakingOverrides;
 }
 
 export interface VersionEntry {
@@ -96,7 +103,8 @@ function progressEquals(a: RecipeProgress, b: RecipeProgress): boolean {
     JSON.stringify(a.productQuantities) === JSON.stringify(b.productQuantities) &&
     a.scaleMode === b.scaleMode &&
     a.gramsInput === b.gramsInput &&
-    a.manualInput === b.manualInput
+    a.manualInput === b.manualInput &&
+    JSON.stringify(a.bakingOverrides) === JSON.stringify(b.bakingOverrides)
   );
 }
 

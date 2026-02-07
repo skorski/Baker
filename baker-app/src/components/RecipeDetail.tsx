@@ -3,11 +3,12 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowCounterClockwise, CheckCircle, CaretDown, FloppyDisk } from '@phosphor-icons/react';
 import type { Recipe, Preferment, Ingredient } from '../types/recipe';
 import { calculateFlourWeight, calculateIngredientsWithPreferment } from '../utils/calculations';
-import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, loadRecipeHistory, saveToHistory, loadRecipeVersions, saveVersion, formatShortDate, type RecipeProgress, type ProductQuantity, type ScaleMode, type HistoryEntry, type VersionEntry } from '../utils/localStorage';
+import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, loadRecipeHistory, saveToHistory, loadRecipeVersions, saveVersion, formatShortDate, type RecipeProgress, type ProductQuantity, type ScaleMode, type HistoryEntry, type VersionEntry, type BakingOverrides } from '../utils/localStorage';
 import { doughProducts } from '../data/doughProducts';
 import ScalingCalculator from './ScalingCalculator';
 import PrefermentCalculator from './PrefermentCalculator';
 import IngredientList from './IngredientList';
+import BakingInfo from './BakingInfo';
 import RecipeTree from './RecipeTree';
 import { getRecipeById } from '../data/recipeLoader';
 
@@ -42,6 +43,7 @@ export default function RecipeDetail() {
   const [scaleMode, setScaleMode] = useState<ScaleMode>('products');
   const [gramsInput, setGramsInput] = useState('');
   const [manualInput, setManualInput] = useState('');
+  const [bakingOverrides, setBakingOverrides] = useState<BakingOverrides>({});
   const [isLoaded, setIsLoaded] = useState(false);
   const [versionEntries, setVersionEntries] = useState<VersionEntry[]>([]);
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
@@ -63,6 +65,7 @@ export default function RecipeDetail() {
       setScaleMode(saved.scaleMode || 'products');
       setGramsInput(saved.gramsInput || '');
       setManualInput(saved.manualInput || '');
+      setBakingOverrides(saved.bakingOverrides || {});
     }
     // Load versions and history entries
     const versions = loadRecipeVersions(id);
@@ -84,10 +87,11 @@ export default function RecipeDetail() {
       productQuantities,
       scaleMode,
       gramsInput,
-      manualInput
+      manualInput,
+      bakingOverrides
     };
     saveRecipeProgress(id, progress);
-  }, [id, isLoaded, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput]);
+  }, [id, isLoaded, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput, bakingOverrides]);
 
   const handleStepToggle = useCallback((stepId: string) => {
     setCompletedSteps(prev =>
@@ -108,6 +112,7 @@ export default function RecipeDetail() {
     setScaleMode('products');
     setGramsInput('');
     setManualInput('');
+    setBakingOverrides({});
     clearRecipeProgress(id);
   }, [id]);
 
@@ -122,11 +127,12 @@ export default function RecipeDetail() {
       productQuantities,
       scaleMode,
       gramsInput,
-      manualInput
+      manualInput,
+      bakingOverrides
     };
     const entry = saveToHistory(id, progress);
     setHistoryEntries(prev => [...prev, entry]);
-  }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput]);
+  }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput, bakingOverrides]);
 
   const handleSaveVersion = useCallback(() => {
     if (!id) return;
@@ -139,7 +145,8 @@ export default function RecipeDetail() {
       productQuantities,
       scaleMode,
       gramsInput,
-      manualInput
+      manualInput,
+      bakingOverrides
     };
     const entry = saveVersion(id, progress);
     if (entry) {
@@ -150,7 +157,7 @@ export default function RecipeDetail() {
     }
     // Clear feedback after 3 seconds
     setTimeout(() => setSaveVersionFeedback(null), 3000);
-  }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput]);
+  }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput, bakingOverrides]);
 
   const handleLoadVersionEntry = useCallback((entry: VersionEntry) => {
     const { progress } = entry;
@@ -163,6 +170,7 @@ export default function RecipeDetail() {
     setScaleMode(progress.scaleMode || 'products');
     setGramsInput(progress.gramsInput || '');
     setManualInput(progress.manualInput || '');
+    setBakingOverrides(progress.bakingOverrides || {});
     setShowVersionDropdown(false);
   }, []);
 
@@ -177,6 +185,7 @@ export default function RecipeDetail() {
     setScaleMode(progress.scaleMode || 'products');
     setGramsInput(progress.gramsInput || '');
     setManualInput(progress.manualInput || '');
+    setBakingOverrides(progress.bakingOverrides || {});
     setShowHistoryDropdown(false);
   }, []);
 
@@ -328,7 +337,8 @@ export default function RecipeDetail() {
     desiredTotalWeight !== null ||
     productQuantities.some(pq => pq.quantity > 0) ||
     gramsInput !== '' ||
-    manualInput !== '';
+    manualInput !== '' ||
+    Object.keys(bakingOverrides).length > 0;
 
   return (
     <div className="container mx-auto px-6 py-12 max-w-5xl">
@@ -454,6 +464,13 @@ export default function RecipeDetail() {
             steps={recipe.steps}
             completedSteps={completedSteps}
             onStepToggle={handleStepToggle}
+            headerContent={recipe.baking ? (
+              <BakingInfo
+                defaults={recipe.baking}
+                overrides={bakingOverrides}
+                onChange={setBakingOverrides}
+              />
+            ) : undefined}
           />
         </div>
       )}

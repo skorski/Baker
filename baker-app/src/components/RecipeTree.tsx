@@ -6,6 +6,7 @@ interface RecipeTreeProps {
   steps: Step[];
   completedSteps: string[];
   onStepToggle: (stepId: string) => void;
+  headerContent?: React.ReactNode;
 }
 
 function formatStepTime(step: Step): string | undefined {
@@ -25,7 +26,7 @@ function formatStepTime(step: Step): string | undefined {
   return parts.length > 0 ? parts.join(', ') : undefined;
 }
 
-export default function RecipeTree({ ingredients, steps, completedSteps, onStepToggle }: RecipeTreeProps) {
+export default function RecipeTree({ ingredients, steps, completedSteps, onStepToggle, headerContent }: RecipeTreeProps) {
   if (steps.length === 0) {
     return null;
   }
@@ -156,6 +157,11 @@ export default function RecipeTree({ ingredients, steps, completedSteps, onStepT
       <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide p-5 pb-3">
         Instructions
       </h2>
+      {headerContent && (
+        <div className="px-5 pb-4">
+          {headerContent}
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>

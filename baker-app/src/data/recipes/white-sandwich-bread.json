@@ -78,6 +78,12 @@
       "passiveMinutes": 40
     }
   ],
+  "baking": {
+    "temperatureF": 350,
+    "timeMinutes": 40,
+    "container": "loaf-pan"
+  },
+  "tagline": "Soft enough to make store‑bought jealous",
   "notes": "Yield ~1.0 kg dough. Timings based on Modernist Bread recommendations for white sandwich bread.",
   "sources": [
     {

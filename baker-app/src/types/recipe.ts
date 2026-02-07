@@ -1,3 +1,9 @@
+export interface BakingInfo {
+  temperatureF: number;
+  timeMinutes: number;
+  container?: string;
+}
+
 export interface Recipe {
   id: string;
   name: string;
@@ -6,6 +12,8 @@ export interface Recipe {
   defaultDoughComposition?: Record<string, number>;
   ingredients: Ingredient[];
   steps: Step[];
+  baking?: BakingInfo;
+  tagline?: string;
   notes?: string;
   source?: string;
   sources?: Source[];
