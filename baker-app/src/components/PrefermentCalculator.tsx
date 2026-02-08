@@ -1,21 +1,21 @@
 import { useState } from 'react';
-import type { Preferment, PrefermentContribution } from '../types/recipe';
+import type { Preferment } from '../types/recipe';
 import { calculatePrefermentContribution } from '../utils/calculations';
 
 interface PrefermentCalculatorProps {
   preferment: Preferment | null;
   onPrefermentChange: (preferment: Preferment | null) => void;
+  targetWeight?: number;
 }
 
 export default function PrefermentCalculator({
   preferment,
-  onPrefermentChange
+  onPrefermentChange,
+  targetWeight
 }: PrefermentCalculatorProps) {
   const [weightInput, setWeightInput] = useState('');
   const [hydration, setHydration] = useState(100);
   const [showDetails, setShowDetails] = useState(false);
-
-  const contribution: PrefermentContribution = calculatePrefermentContribution(preferment);
 
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -27,8 +27,8 @@ export default function PrefermentCalculator({
     }
 
     const weight = parseFloat(value);
-    if (!isNaN(weight) && weight > 0) {
-      onPrefermentChange({ weight, hydration });
+    if (!isNaN(weight)) {
+      onPrefermentChange({ weight: Math.max(0, weight), hydration });
     }
   };
 
@@ -39,6 +39,14 @@ export default function PrefermentCalculator({
       if (preferment) {
         onPrefermentChange({ ...preferment, hydration: value });
       }
+    }
+  };
+
+  const handleUseTarget = () => {
+    if (targetWeight && targetWeight > 0) {
+      const rounded = Math.round(targetWeight);
+      setWeightInput(String(rounded));
+      onPrefermentChange({ weight: rounded, hydration });
     }
   };
 
@@ -55,40 +63,61 @@ export default function PrefermentCalculator({
             value={weightInput}
             onChange={handleWeightChange}
             className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent text-sm"
-            placeholder="grams"
+            placeholder={targetWeight ? `${Math.round(targetWeight)}g needed` : 'grams'}
           />
         </div>
       </div>
 
-      {preferment && preferment.weight > 0 && (
-        <div className="mt-3">
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className="text-xs text-stone-400 hover:text-stone-600 transition-colors"
-          >
-            {showDetails ? 'Hide details' : 'Show details'}
-          </button>
-
-          {showDetails && (
-            <div className="mt-3 pt-3 border-t border-stone-100 space-y-3">
-              <div className="flex items-center gap-3">
-                <label className="text-xs text-stone-500 whitespace-nowrap">Hydration %</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={hydration}
-                  onChange={handleHydrationChange}
-                  className="w-20 px-2 py-1 border border-stone-200 rounded text-sm text-center"
-                />
-              </div>
-              <div className="flex gap-4 text-xs text-stone-500">
-                <span>Flour: {contribution.flour}g</span>
-                <span>Liquid: {contribution.water}g</span>
-              </div>
-            </div>
+      {(targetWeight !== undefined && targetWeight > 0 || preferment) && (
+        <div className="mt-2 flex items-center gap-2 text-xs">
+          {targetWeight !== undefined && targetWeight > 0 && (
+            <>
+              <span className="text-stone-400">Recipe needs {Math.round(targetWeight)}g</span>
+              {(!preferment || preferment.weight !== Math.round(targetWeight)) && (
+                <button
+                  onClick={handleUseTarget}
+                  className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
+                >
+                  Use target
+                </button>
+              )}
+            </>
+          )}
+          {targetWeight !== undefined && targetWeight > 0 && preferment && (
+            <span className="text-stone-200">│</span>
+          )}
+          {preferment && (
+            <button
+              onClick={() => setShowDetails(!showDetails)}
+              className="text-stone-400 hover:text-stone-600 transition-colors"
+            >
+              {showDetails ? 'Hide details' : 'Show details'}
+            </button>
           )}
         </div>
       )}
+
+      {preferment && showDetails && (() => {
+        const contribution = calculatePrefermentContribution(preferment);
+        return (
+          <div className="mt-3 pt-3 border-t border-stone-100 space-y-3">
+            <div className="flex items-center gap-3">
+              <label className="text-xs text-stone-500 whitespace-nowrap">Hydration %</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={hydration}
+                onChange={handleHydrationChange}
+                className="w-20 px-2 py-1 border border-stone-200 rounded text-sm text-center"
+              />
+            </div>
+            <div className="flex gap-4 text-xs text-stone-500">
+              <span>Flour: {contribution.flour}g</span>
+              <span>Liquid: {contribution.water}g</span>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

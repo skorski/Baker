@@ -7,7 +7,7 @@
   "ingredients": [
     { "id": "bread_flour", "name": "Bread flour", "percentage": 100, "type": "flour" },
     { "id": "water", "name": "Water", "percentage": 58.06, "type": "liquid" },
-    { "id": "pate_fermentee", "name": "Pâte fermentée", "percentage": 22.98, "type": "leavening" },
+    { "id": "pate_fermentee", "name": "Pâte fermentée", "percentage": 22.98, "type": "leavening", "isPreferment": true, "prefermentHydration": 100 },
     { "id": "sugar", "name": "Sugar", "percentage": 1.94, "type": "sugar" },
     { "id": "vegetable_oil", "name": "Vegetable oil", "percentage": 1.94, "type": "fat" },
     { "id": "fine_salt", "name": "Fine salt", "percentage": 0.97, "type": "salt" },

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowCounterClockwise, CheckCircle, CaretDown } from '@phosphor-icons/react';
 import type { Recipe, Preferment, Ingredient } from '../types/recipe';
-import { calculateFlourWeight, calculateIngredientsWithPreferment } from '../utils/calculations';
+import { calculateFlourWeight, calculateIngredientsWithPreferment, getPrefermentTarget, sumTotalPercentage, sumDoughPercentage } from '../utils/calculations';
 import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, loadRecipeHistory, saveToHistory, loadRecipeVersions, formatShortDate, type RecipeProgress, type ProductQuantity, type ScaleMode, type HistoryEntry, type VersionEntry, type BakingOverrides } from '../utils/localStorage';
 import { doughProducts } from '../data/doughProducts';
 import ScalingCalculator from './ScalingCalculator';
@@ -57,23 +57,37 @@ export default function RecipeDetail() {
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [showVersionDropdown, setShowVersionDropdown] = useState(false);
 
+  const applyProgress = useCallback((progress: RecipeProgress) => {
+    setCompletedSteps(progress.completedSteps || []);
+    setPercentageOverrides(progress.percentageOverrides || {});
+    setWholeWheatPercent(progress.wholeWheatPercent ?? null);
+    setPreferment(progress.preferment ?? null);
+    setDesiredTotalWeight(progress.desiredTotalWeight ?? null);
+    setProductQuantities(progress.productQuantities?.length ? mergeProductQuantities(progress.productQuantities) : defaultProductQuantities());
+    setScaleMode(progress.scaleMode || 'products');
+    setGramsInput(progress.gramsInput || '');
+    setManualInput(progress.manualInput || '');
+    setBakingOverrides(progress.bakingOverrides || {});
+  }, []);
+
+  const buildProgress = useCallback((): RecipeProgress => ({
+    completedSteps,
+    percentageOverrides,
+    wholeWheatPercent,
+    preferment,
+    desiredTotalWeight,
+    productQuantities,
+    scaleMode,
+    gramsInput,
+    manualInput,
+    bakingOverrides
+  }), [completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput, bakingOverrides]);
+
   // Load saved progress from localStorage
   useEffect(() => {
     if (!id) return;
     const saved = loadRecipeProgress(id);
-    if (saved) {
-      setCompletedSteps(saved.completedSteps || []);
-      setPercentageOverrides(saved.percentageOverrides || {});
-      setWholeWheatPercent(saved.wholeWheatPercent ?? null);
-      setPreferment(saved.preferment ?? null);
-      setDesiredTotalWeight(saved.desiredTotalWeight ?? null);
-      setProductQuantities(saved.productQuantities?.length ? mergeProductQuantities(saved.productQuantities) : defaultProductQuantities());
-      setScaleMode(saved.scaleMode || 'products');
-      setGramsInput(saved.gramsInput || '');
-      setManualInput(saved.manualInput || '');
-      setBakingOverrides(saved.bakingOverrides || {});
-    }
-    // Load versions and history entries
+    if (saved) applyProgress(saved);
     const versions = loadRecipeVersions(id);
     setVersionEntries(versions.entries);
     const history = loadRecipeHistory(id);
@@ -84,20 +98,8 @@ export default function RecipeDetail() {
   // Save progress to localStorage when state changes
   useEffect(() => {
     if (!id || !isLoaded) return;
-    const progress: RecipeProgress = {
-      completedSteps,
-      percentageOverrides,
-      wholeWheatPercent,
-      preferment,
-      desiredTotalWeight,
-      productQuantities,
-      scaleMode,
-      gramsInput,
-      manualInput,
-      bakingOverrides
-    };
-    saveRecipeProgress(id, progress);
-  }, [id, isLoaded, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput, bakingOverrides]);
+    saveRecipeProgress(id, buildProgress());
+  }, [id, isLoaded, buildProgress]);
 
   const handleStepToggle = useCallback((stepId: string) => {
     setCompletedSteps(prev =>
@@ -124,50 +126,18 @@ export default function RecipeDetail() {
 
   const handleMadeIt = useCallback(() => {
     if (!id) return;
-    const progress: RecipeProgress = {
-      completedSteps,
-      percentageOverrides,
-      wholeWheatPercent,
-      preferment,
-      desiredTotalWeight,
-      productQuantities,
-      scaleMode,
-      gramsInput,
-      manualInput,
-      bakingOverrides
-    };
-    const entry = saveToHistory(id, progress);
+    const entry = saveToHistory(id, buildProgress());
     setHistoryEntries(prev => [...prev, entry]);
-  }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput, bakingOverrides]);
+  }, [id, buildProgress]);
 
   const handleLoadVersionEntry = useCallback((entry: VersionEntry) => {
-    const { progress } = entry;
-    setCompletedSteps(progress.completedSteps || []);
-    setPercentageOverrides(progress.percentageOverrides || {});
-    setWholeWheatPercent(progress.wholeWheatPercent ?? null);
-    setPreferment(progress.preferment ?? null);
-    setDesiredTotalWeight(progress.desiredTotalWeight ?? null);
-    setProductQuantities(progress.productQuantities?.length ? mergeProductQuantities(progress.productQuantities) : defaultProductQuantities());
-    setScaleMode(progress.scaleMode || 'products');
-    setGramsInput(progress.gramsInput || '');
-    setManualInput(progress.manualInput || '');
-    setBakingOverrides(progress.bakingOverrides || {});
+    applyProgress(entry.progress);
     setShowVersionDropdown(false);
-  }, []);
+  }, [applyProgress]);
 
   const handleLoadHistoryEntry = useCallback((entry: HistoryEntry) => {
-    const { progress } = entry;
-    setCompletedSteps(progress.completedSteps || []);
-    setPercentageOverrides(progress.percentageOverrides || {});
-    setWholeWheatPercent(progress.wholeWheatPercent ?? null);
-    setPreferment(progress.preferment ?? null);
-    setDesiredTotalWeight(progress.desiredTotalWeight ?? null);
-    setProductQuantities(progress.productQuantities?.length ? mergeProductQuantities(progress.productQuantities) : defaultProductQuantities());
-    setScaleMode(progress.scaleMode || 'products');
-    setGramsInput(progress.gramsInput || '');
-    setManualInput(progress.manualInput || '');
-    setBakingOverrides(progress.bakingOverrides || {});
-  }, []);
+    applyProgress(entry.progress);
+  }, [applyProgress]);
 
   // Find the primary bread flour ingredient (first flour type, or one with 'bread' in name)
   const primaryFlourId = useMemo(() => {
@@ -240,9 +210,7 @@ export default function RecipeDetail() {
 
   // Calculate original total percentage from unmodified recipe
   const originalTotalPercentage = useMemo(
-    () => recipe ? recipe.ingredients.reduce(
-      (sum, ing) => ing.amountHint ? sum : sum + ing.percentage, 0
-    ) : 0,
+    () => recipe ? sumTotalPercentage(recipe.ingredients) : 0,
     [recipe]
   );
 
@@ -256,10 +224,18 @@ export default function RecipeDetail() {
     [recipe, adjustedIngredients, flourWeight, preferment]
   );
 
+  const prefermentTarget = useMemo(
+    () => getPrefermentTarget(adjustedIngredients, flourWeight),
+    [adjustedIngredients, flourWeight]
+  );
+
+  const prefermentName = useMemo(
+    () => adjustedIngredients.find(i => i.isPreferment)?.name,
+    [adjustedIngredients]
+  );
+
   const totalPercentage = useMemo(
-    () => adjustedIngredients.reduce(
-      (sum, ing) => ing.amountHint ? sum : sum + ing.percentage, 0
-    ),
+    () => sumDoughPercentage(adjustedIngredients),
     [adjustedIngredients]
   );
 
@@ -394,19 +370,21 @@ export default function RecipeDetail() {
           <PrefermentCalculator
             preferment={preferment}
             onPrefermentChange={setPreferment}
+            targetWeight={prefermentTarget > 0 ? prefermentTarget : undefined}
           />
         </div>
 
         <div className="lg:col-span-2">
           <IngredientList
             ingredients={calculatedIngredients}
-            flourWeight={flourWeight}
             onPercentageChange={handlePercentageChange}
             onResetPercentage={handleResetPercentage}
             getOriginalPercentage={getOriginalPercentage}
             primaryFlourId={primaryFlourId}
             wholeWheatPercent={wholeWheatPercent}
             onWholeWheatChange={setWholeWheatPercent}
+            prefermentTarget={prefermentTarget > 0 ? prefermentTarget : undefined}
+            prefermentName={prefermentName}
           />
         </div>
       </div>

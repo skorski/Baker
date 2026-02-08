@@ -4,13 +4,14 @@ import type { CalculatedIngredientWithPreferment } from '../types/recipe';
 
 interface IngredientListProps {
   ingredients: CalculatedIngredientWithPreferment[];
-  flourWeight: number;
   onPercentageChange: (ingredientId: string, newPercentage: number) => void;
   onResetPercentage: (ingredientId: string) => void;
   getOriginalPercentage: (ingredientId: string) => number | undefined;
   primaryFlourId: string | null;
   wholeWheatPercent: number | null;
   onWholeWheatChange: (percent: number | null) => void;
+  prefermentTarget?: number;
+  prefermentName?: string;
 }
 
 export default function IngredientList({ 
@@ -20,9 +21,11 @@ export default function IngredientList({
   getOriginalPercentage,
   primaryFlourId,
   wholeWheatPercent,
-  onWholeWheatChange
+  onWholeWheatChange,
+  prefermentTarget,
+  prefermentName
 }: IngredientListProps) {
-  const hasPrefermentDeductions = ingredients.some(i => i.prefermentDeduction);
+  const hasPrefermentDeductions = ingredients.some(i => i.prefermentDeduction !== undefined && i.prefermentDeduction !== 0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [editingWholeWheat, setEditingWholeWheat] = useState(false);
@@ -87,12 +90,35 @@ export default function IngredientList({
   return (
     <div className="bg-white p-5 rounded-lg border border-stone-200">
       <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-4">Ingredients</h2>
+      
+      {prefermentTarget !== undefined && prefermentTarget > 0 && (
+        <div className="mb-4 flex items-center justify-between text-xs text-stone-400">
+          <span>{prefermentName ?? 'Preferment'} · {Math.round(prefermentTarget)}g recommended</span>
+          {hasPrefermentDeductions && <span>adjusted for preferment</span>}
+        </div>
+      )}
+      
       <div className="divide-y divide-stone-100">
         {ingredients.map(ingredient => {
           const originalPercentage = getOriginalPercentage(ingredient.id);
           const isEditing = editingId === ingredient.id;
           const hasOverride = originalPercentage !== undefined;
           const isPrimaryFlour = ingredient.id === primaryFlourId;
+
+          // Preferment row: display-only, styled differently (managed by PrefermentCalculator widget)
+          if (ingredient.isPreferment) {
+            return (
+              <div key={ingredient.id} className="py-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-400 italic">{ingredient.name}</span>
+                  <div className="text-right flex items-center gap-2">
+                    <span className="text-stone-400 font-medium">{ingredient.finalDisplayWeight}</span>
+                    <span className="text-sm text-stone-300">{ingredient.percentage}%</span>
+                  </div>
+                </div>
+              </div>
+            );
+          }
 
           return (
             <div
@@ -183,9 +209,12 @@ export default function IngredientList({
                 </div>
               )}
               
-              {ingredient.prefermentDeduction && ingredient.prefermentDeduction > 0 && (
+              {ingredient.prefermentDeduction !== undefined && ingredient.prefermentDeduction !== 0 && (
                 <div className="mt-1 text-xs text-stone-400 text-right">
-                  {ingredient.displayWeight} − {ingredient.prefermentDeduction}g preferment
+                  {ingredient.prefermentDeduction > 0
+                    ? `${ingredient.displayWeight} − ${ingredient.prefermentDeduction}g (extra preferment)`
+                    : `${ingredient.displayWeight} + ${Math.abs(ingredient.prefermentDeduction)}g (missing preferment)`
+                  }
                 </div>
               )}
             </div>

@@ -32,6 +32,8 @@ export interface Ingredient {
   percentage: number;
   type: IngredientType;
   amountHint?: string;
+  isPreferment?: boolean;
+  prefermentHydration?: number;
 }
 
 export type IngredientType =
@@ -83,12 +85,6 @@ export type TechniqueType =
 export interface CalculatedIngredient extends Ingredient {
   weight: number;
   displayWeight: string;
-}
-
-export interface ScalingState {
-  desiredTotalWeight: number | null;
-  calculatedFlourWeight: number;
-  isScaled: boolean;
 }
 
 export interface Preferment {
