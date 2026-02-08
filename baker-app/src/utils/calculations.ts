@@ -1,23 +1,32 @@
 import type { Recipe, Ingredient, CalculatedIngredient, ValidationResult, Preferment, PrefermentContribution, CalculatedIngredientWithPreferment } from '../types/recipe';
 
+/** Sum all baker's percentages (excludes hint-only items). */
+export function sumTotalPercentage(ingredients: Ingredient[]): number {
+  return ingredients.reduce(
+    (sum, ing) => ing.amountHint ? sum : sum + ing.percentage,
+    0
+  );
+}
+
+/** Sum baker's percentages for final-mix ingredients only (excludes preferments and hint-only items). */
+export function sumDoughPercentage(ingredients: Ingredient[]): number {
+  return ingredients.reduce(
+    (sum, ing) => (ing.amountHint || ing.isPreferment) ? sum : sum + ing.percentage,
+    0
+  );
+}
+
 export function calculateFlourWeight(
   recipe: Recipe,
   desiredTotalWeight: number | null,
   originalTotalPercentage?: number
 ): number {
-  const currentTotalPercentage = recipe.ingredients.reduce(
-    (sum, ingredient) => {
-      if (ingredient.amountHint) return sum;
-      return sum + ingredient.percentage;
-    },
-    0
-  );
+  // Total percentage INCLUDES preferment — levain is part of the total dough weight
+  const currentTotalPercentage = sumTotalPercentage(recipe.ingredients);
 
   if (desiredTotalWeight === null) {
-    // Use the original total percentage to determine the baseline total dough weight
     const baselinePercentage = originalTotalPercentage ?? currentTotalPercentage;
     const defaultTotalWeight = (recipe.baseFlourWeight * baselinePercentage) / 100;
-    // Recalculate flour weight to maintain this total with current percentages
     return (defaultTotalWeight * 100) / currentTotalPercentage;
   }
 
@@ -81,43 +90,116 @@ export function calculateIngredientsWithPreferment(
   flourWeight: number,
   preferment: Preferment | null
 ): CalculatedIngredientWithPreferment[] {
-  const contribution = calculatePrefermentContribution(preferment);
+  const hasRecipePreferments = ingredients.some(i => i.isPreferment);
   
-  const firstFlourIndex = ingredients.findIndex(i => i.type === 'flour' && !i.amountHint);
-  const firstLiquidIndex = ingredients.findIndex(i => i.type === 'liquid' && !i.amountHint);
-  
+  if (hasRecipePreferments) {
+    return calculateWithRecipePreferments(ingredients, flourWeight, preferment);
+  }
+  return calculateWithStandalonePreferment(ingredients, flourWeight, preferment);
+}
+
+/** Map ingredients to calculated results, applying flour/water deductions. */
+function mapIngredients(
+  ingredients: Ingredient[],
+  flourWeight: number,
+  flourDeduction: number,
+  waterDeduction: number,
+  prefermentOverride?: { ingredient: Ingredient; weight: number }
+): CalculatedIngredientWithPreferment[] {
+  const firstFlourIndex = ingredients.findIndex(i => i.type === 'flour' && !i.amountHint && !i.isPreferment);
+  const firstLiquidIndex = ingredients.findIndex(i => i.type === 'liquid' && !i.amountHint && !i.isPreferment);
+
   return ingredients.map((ingredient, index) => {
     if (ingredient.amountHint) {
       return {
         ...ingredient,
-        weight: 0,
-        displayWeight: ingredient.amountHint,
-        finalWeight: 0,
-        finalDisplayWeight: ingredient.amountHint
+        weight: 0, displayWeight: ingredient.amountHint,
+        finalWeight: 0, finalDisplayWeight: ingredient.amountHint
       };
     }
 
-    const rawWeight = calculateIngredientWeight(flourWeight, ingredient.percentage);
-    const roundedWeight = roundIngredientAmount(rawWeight);
-    
-    let deduction = 0;
-    if (index === firstFlourIndex && contribution.flour > 0) {
-      deduction = contribution.flour;
-    } else if (index === firstLiquidIndex && contribution.water > 0) {
-      deduction = contribution.water;
-    }
-    
-    const finalWeight = roundIngredientAmount(Math.max(0, roundedWeight - deduction));
+    const roundedWeight = roundIngredientAmount(calculateIngredientWeight(flourWeight, ingredient.percentage));
 
+    if (prefermentOverride && ingredient.isPreferment) {
+      const fw = roundIngredientAmount(prefermentOverride.weight);
+      return {
+        ...ingredient,
+        weight: roundedWeight, displayWeight: `${roundedWeight}g`,
+        finalWeight: fw, finalDisplayWeight: `${fw}g`
+      };
+    }
+
+    let deduction = 0;
+    if (index === firstFlourIndex) deduction = flourDeduction;
+    else if (index === firstLiquidIndex) deduction = waterDeduction;
+
+    const finalWeight = roundIngredientAmount(Math.max(0, roundedWeight - deduction));
     return {
       ...ingredient,
-      weight: roundedWeight,
-      displayWeight: `${roundedWeight}g`,
-      prefermentDeduction: deduction > 0 ? deduction : undefined,
-      finalWeight,
-      finalDisplayWeight: `${finalWeight}g`
+      weight: roundedWeight, displayWeight: `${roundedWeight}g`,
+      prefermentDeduction: deduction !== 0 ? deduction : undefined,
+      finalWeight, finalDisplayWeight: `${finalWeight}g`
     };
   });
+}
+
+// Recipe has isPreferment ingredients. The recipe's flour% and water% assume the full target
+// preferment amount. When the user has a different amount, adjust flour/water to compensate:
+//   - Less than target → add extra flour/water to the mix (negative deduction)
+//   - More than target → reduce flour/water from the mix (positive deduction)
+//   - Equal to target or null (default) → no adjustment
+function calculateWithRecipePreferments(
+  ingredients: Ingredient[],
+  flourWeight: number,
+  preferment: Preferment | null
+): CalculatedIngredientWithPreferment[] {
+  // Compute the recipe's target preferment
+  let targetWeight = 0;
+  let targetHydration = 100;
+  for (const ing of ingredients) {
+    if (!ing.isPreferment || ing.amountHint) continue;
+    targetWeight += roundIngredientAmount(calculateIngredientWeight(flourWeight, ing.percentage));
+    targetHydration = ing.prefermentHydration ?? 100;
+  }
+
+  // Determine the user's preferment amount (null = use target, no adjustment)
+  const userWeight = preferment !== null ? preferment.weight : targetWeight;
+  const userHydration = preferment !== null ? preferment.hydration : targetHydration;
+
+  // Adjustment = difference between what user has vs what recipe expects
+  const delta = userWeight - targetWeight;
+
+  let flourDeduction = 0;
+  let waterDeduction = 0;
+  if (delta !== 0) {
+    // Positive delta: user has more preferment → reduce mix flour/water
+    // Negative delta: user has less preferment → increase mix flour/water (deduction goes negative)
+    const deltaFlour = roundIngredientAmount(Math.abs(delta) / (1 + userHydration / 100));
+    const deltaWater = roundIngredientAmount(deltaFlour * (userHydration / 100));
+    flourDeduction = delta > 0 ? deltaFlour : -deltaFlour;
+    waterDeduction = delta > 0 ? deltaWater : -deltaWater;
+  }
+
+  return mapIngredients(ingredients, flourWeight, flourDeduction, waterDeduction, {
+    ingredient: ingredients.find(i => i.isPreferment)!,
+    weight: userWeight
+  });
+}
+
+// No recipe preferments: standalone preferment deduction (legacy behavior)
+function calculateWithStandalonePreferment(
+  ingredients: Ingredient[],
+  flourWeight: number,
+  preferment: Preferment | null
+): CalculatedIngredientWithPreferment[] {
+  const contribution = calculatePrefermentContribution(preferment);
+  return mapIngredients(ingredients, flourWeight, contribution.flour, contribution.water);
+}
+
+export function getPrefermentTarget(ingredients: Ingredient[], flourWeight: number): number {
+  return ingredients
+    .filter(i => i.isPreferment && !i.amountHint)
+    .reduce((sum, i) => sum + roundIngredientAmount(calculateIngredientWeight(flourWeight, i.percentage)), 0);
 }
 
 export function validateTotalWeight(input: string): ValidationResult {

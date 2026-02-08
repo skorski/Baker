@@ -7,7 +7,7 @@
   "ingredients": [
     { "id": "bread_flour", "name": "Bread flour", "percentage": 100, "type": "flour" },
     { "id": "water", "name": "Water", "percentage": 65.63, "type": "liquid" },
-    { "id": "levain", "name": "Liquid levain (mature)", "percentage": 40.63, "type": "leavening" },
+    { "id": "levain", "name": "Liquid levain (mature)", "percentage": 40.63, "type": "leavening", "isPreferment": true, "prefermentHydration": 100 },
     { "id": "wheat_bran", "name": "Wheat bran", "percentage": 2.08, "type": "enrichment" },
     { "id": "diastatic_malt", "name": "Diastatic malt powder", "percentage": 0.21, "type": "enrichment" },
     { "id": "salt", "name": "Fine sea salt", "percentage": 2.5, "type": "salt" }

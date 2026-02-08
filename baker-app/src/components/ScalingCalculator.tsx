@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { validateTotalWeight } from '../utils/calculations';
 import { doughProducts } from '../data/doughProducts';
 import { loadProductWeightOverrides } from '../utils/localStorage';
@@ -39,45 +39,45 @@ export default function ScalingCalculator({
   const getEffectiveWeight = (product: typeof doughProducts[0]) =>
     weightOverrides[product.id] ?? product.weightGrams;
 
-  const calculatedTotal = useMemo(() => {
-    return productQuantities.reduce((sum, pq) => {
+  const computeProductTotal = (quantities: ProductQuantity[]) => {
+    return quantities.reduce((sum, pq) => {
       const product = doughProducts.find(p => p.id === pq.productId);
       return sum + (product ? getEffectiveWeight(product) * pq.quantity : 0);
     }, 0);
-  }, [productQuantities, weightOverrides]);
+  };
+
+  const calculatedTotal = useMemo(
+    () => computeProductTotal(productQuantities),
+    [productQuantities, weightOverrides]
+  );
 
   const hasAnyProducts = productQuantities.some(pq => pq.quantity > 0);
 
-  useEffect(() => {
-    if (scaleMode === 'manual' || scaleMode === 'grams') {
-      return;
-    }
-    if (calculatedTotal > 0) {
-      onTotalWeightChange(calculatedTotal);
-    } else {
-      onTotalWeightChange(null);
-    }
-  }, [calculatedTotal, scaleMode, onTotalWeightChange]);
-
   const handleQuantityChange = (productId: string, delta: number) => {
-    onProductQuantitiesChange(
-      productQuantities.map(pq =>
-        pq.productId === productId
-          ? { ...pq, quantity: Math.max(0, pq.quantity + delta) }
-          : pq
-      )
+    const updated = productQuantities.map(pq =>
+      pq.productId === productId
+        ? { ...pq, quantity: Math.max(0, pq.quantity + delta) }
+        : pq
     );
+    onProductQuantitiesChange(updated);
+    if (scaleMode === 'products') {
+      const total = computeProductTotal(updated);
+      onTotalWeightChange(total > 0 ? total : null);
+    }
   };
 
   const handleSetQuantity = (productId: string, value: string) => {
     const num = parseInt(value, 10);
-    onProductQuantitiesChange(
-      productQuantities.map(pq =>
-        pq.productId === productId
-          ? { ...pq, quantity: isNaN(num) ? 0 : Math.max(0, num) }
-          : pq
-      )
+    const updated = productQuantities.map(pq =>
+      pq.productId === productId
+        ? { ...pq, quantity: isNaN(num) ? 0 : Math.max(0, num) }
+        : pq
     );
+    onProductQuantitiesChange(updated);
+    if (scaleMode === 'products') {
+      const total = computeProductTotal(updated);
+      onTotalWeightChange(total > 0 ? total : null);
+    }
   };
 
   const handleGramsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +137,9 @@ export default function ScalingCalculator({
 
   const clearAllProducts = () => {
     onProductQuantitiesChange(productQuantities.map(pq => ({ ...pq, quantity: 0 })));
+    if (scaleMode === 'products') {
+      onTotalWeightChange(null);
+    }
   };
 
   return (
