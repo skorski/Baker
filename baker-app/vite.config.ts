@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { execSync } from 'child_process'
 
 function getGitCommit() {
+  if (process.env.VITE_GIT_COMMIT) return process.env.VITE_GIT_COMMIT
   try {
     return execSync('git rev-parse --short HEAD').toString().trim()
   } catch {
