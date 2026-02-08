@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Trash, FloppyDisk, Clock, CaretDown, CaretRight } from '@phosphor-icons/react';
+import { Star, Trash, Clock, CaretDown, CaretRight, PencilSimple } from '@phosphor-icons/react';
 import { recipes } from '../data/recipeLoader';
 import {
   loadRecipeHistory,
@@ -12,24 +12,30 @@ import {
   getDefaultVersion,
   setDefaultVersion,
   clearDefaultVersion,
+  updateHistoryEntryNotes,
+  saveVersion,
   type HistoryEntry,
   type VersionEntry,
+  type RecipeProgress,
 } from '../utils/localStorage';
+import { summarizeProgress, describeChanges } from '../utils/progressSummary';
+import type { Recipe } from '../types/recipe';
 
 interface TimelineItem {
   type: 'version' | 'history';
   recipeId: string;
   recipeName: string;
   date: string;
-  id: number; // version number or history id
+  id: number;
   isDefault?: boolean;
-  // For history items that also have a matching saved version
-  isSaved?: boolean;
+  notes?: string;
+  progress: RecipeProgress;
 }
 
 interface RecipeGroup {
   recipeId: string;
   recipeName: string;
+  recipe: Recipe | undefined;
   items: TimelineItem[];
 }
 
@@ -38,6 +44,8 @@ export default function VersionHistory() {
   const [versionsByRecipe, setVersionsByRecipe] = useState<Record<string, VersionEntry[]>>({});
   const [defaultVersions, setDefaultVersions] = useState<Record<string, number | null>>({});
   const [expandedRecipes, setExpandedRecipes] = useState<Set<string>>(new Set());
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load all data on mount
@@ -94,6 +102,7 @@ export default function VersionHistory() {
           date: v.date,
           id: v.version,
           isDefault: defaultVersions[recipeId] === v.version,
+          progress: v.progress,
         });
       }
 
@@ -106,14 +115,15 @@ export default function VersionHistory() {
           recipeName,
           date: h.date,
           id: h.id,
-          isSaved: false, // Could check if a matching version exists
+          notes: h.notes,
+          progress: h.progress,
         });
       }
 
       // Sort chronologically (newest first)
       items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      return { recipeId, recipeName, items };
+      return { recipeId, recipeName, recipe, items };
     });
 
     // Sort groups by recipe name
@@ -166,7 +176,52 @@ export default function VersionHistory() {
     }
   }, [defaultVersions]);
 
-  const toggleRecipeExpanded = useCallback((recipeId: string) => {
+  const handleSetHistoryDefault = useCallback((recipeId: string, entry: HistoryEntry) => {
+    const versions = loadRecipeVersions(recipeId);
+    let matchingVersion = versions.entries.find(v =>
+      JSON.stringify(v.progress.percentageOverrides) === JSON.stringify(entry.progress.percentageOverrides) &&
+      JSON.stringify(v.progress.productQuantities) === JSON.stringify(entry.progress.productQuantities) &&
+      v.progress.scaleMode === entry.progress.scaleMode
+    );
+
+    const currentDefault = defaultVersions[recipeId];
+    if (currentDefault !== null && matchingVersion && currentDefault === matchingVersion.version) {
+      clearDefaultVersion(recipeId);
+      setDefaultVersions((prev) => ({ ...prev, [recipeId]: null }));
+    } else {
+      if (!matchingVersion) {
+        const saved = saveVersion(recipeId, entry.progress);
+        if (saved) {
+          matchingVersion = saved;
+          setVersionsByRecipe((prev) => {
+            const updated = { ...prev };
+            updated[recipeId] = [...(updated[recipeId] || []), saved];
+            return updated;
+          });
+        }
+      }
+      if (matchingVersion) {
+        setDefaultVersion(recipeId, matchingVersion.version);
+        setDefaultVersions((prev) => ({ ...prev, [recipeId]: matchingVersion!.version }));
+      }
+    }
+  }, [defaultVersions]);
+
+  const handleSaveNote = useCallback((recipeId: string, historyId: number, notes: string) => {
+    updateHistoryEntryNotes(recipeId, historyId, notes);
+    setHistoryByRecipe((prev) => {
+      const updated = { ...prev };
+      if (updated[recipeId]) {
+        updated[recipeId] = updated[recipeId].map((e) =>
+          e.id === historyId ? { ...e, notes: notes || undefined } : e
+        );
+      }
+      return updated;
+    });
+    setEditingNoteId(null);
+  }, []);
+
+  const toggleRecipeExpanded= useCallback((recipeId: string) => {
     setExpandedRecipes((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(recipeId)) {
@@ -250,80 +305,168 @@ export default function VersionHistory() {
                 {/* Timeline items */}
                 {expandedRecipes.has(group.recipeId) && (
                   <div className="divide-y divide-stone-100">
-                    {group.items.map((item, index) => (
-                      <div
-                        key={`${item.type}-${item.id}`}
-                        className="flex items-center gap-4 px-6 py-4 hover:bg-stone-50 transition-colors group"
-                      >
-                        {/* Timeline indicator */}
-                        <div className="flex flex-col items-center">
-                          <div
-                            className={`w-3 h-3 rounded-full ${
-                              item.type === 'version'
-                                ? 'bg-amber-500'
-                                : 'bg-stone-300'
-                            }`}
-                          />
-                          {index < group.items.length - 1 && (
-                            <div className="w-0.5 h-full bg-stone-200 mt-1 hidden" />
-                          )}
-                        </div>
+                    {group.items.map((item) => {
+                      const summary = group.recipe ? summarizeProgress(item.progress, group.recipe) : '';
+                      const changes = group.recipe ? describeChanges(item.progress, group.recipe) : [];
+                      const isHistoryDefault = item.type === 'history' && (() => {
+                        if (!defaultVersions[item.recipeId]) return false;
+                        const vers = versionsByRecipe[item.recipeId] || [];
+                        const match = vers.find(v =>
+                          JSON.stringify(v.progress.percentageOverrides) === JSON.stringify(item.progress.percentageOverrides) &&
+                          JSON.stringify(v.progress.productQuantities) === JSON.stringify(item.progress.productQuantities) &&
+                          v.progress.scaleMode === item.progress.scaleMode
+                        );
+                        return match?.version === defaultVersions[item.recipeId];
+                      })();
 
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {item.type === 'version' ? (
-                              <>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                  <FloppyDisk size={12} weight="bold" />
-                                  Version {item.id}
-                                </span>
-                                {item.isDefault && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                    <Star size={12} weight="fill" />
-                                    Default
+                      return (
+                        <div
+                          key={`${item.type}-${item.id}`}
+                          className="flex items-start gap-4 px-6 py-4 hover:bg-stone-50 transition-colors group"
+                        >
+                          {/* Timeline indicator */}
+                          <div className="flex flex-col items-center pt-1">
+                            <div
+                              className={`w-3 h-3 rounded-full ${
+                                item.type === 'version'
+                                  ? 'bg-amber-500'
+                                  : 'bg-stone-300'
+                              }`}
+                            />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {item.type === 'version' ? (
+                                <>
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                    Version {item.id}
                                   </span>
-                                )}
-                              </>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-600">
-                                <Clock size={12} />
-                                Made it #{item.id}
-                              </span>
+                                  {item.isDefault && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                      <Star size={10} weight="fill" />
+                                      Default
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-600">
+                                    <Clock size={12} />
+                                    Made it
+                                  </span>
+                                  {isHistoryDefault && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                      <Star size={10} weight="fill" />
+                                      Default
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                            <p className="text-sm text-stone-500 mt-1">{formatDate(item.date)}</p>
+
+                            {summary && (
+                              <p className="text-sm text-stone-500 mt-1">{summary}</p>
+                            )}
+
+                            {changes.length > 0 && (
+                              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                {changes.map((change, i) => (
+                                  <span key={i} className="inline-block px-2 py-0.5 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                    {change}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {item.type === 'history' && (
+                              editingNoteId === `${item.recipeId}-${item.id}` ? (
+                                <div className="flex items-start gap-2 mt-2">
+                                  <textarea
+                                    autoFocus
+                                    value={noteDraft}
+                                    onChange={e => setNoteDraft(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveNote(item.recipeId, item.id, noteDraft); }
+                                      if (e.key === 'Escape') setEditingNoteId(null);
+                                    }}
+                                    rows={2}
+                                    className="flex-1 px-2 py-1.5 text-sm border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none"
+                                    placeholder="How did it turn out?"
+                                  />
+                                  <button onClick={() => handleSaveNote(item.recipeId, item.id, noteDraft)} className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Save">
+                                    ✓
+                                  </button>
+                                </div>
+                              ) : item.notes ? (
+                                <p
+                                  className="text-sm text-stone-500 mt-2 italic cursor-pointer hover:text-stone-700 transition-colors"
+                                  onClick={() => { setEditingNoteId(`${item.recipeId}-${item.id}`); setNoteDraft(item.notes || ''); }}
+                                  title="Click to edit"
+                                >
+                                  {item.notes}
+                                </p>
+                              ) : null
                             )}
                           </div>
-                          <p className="text-sm text-stone-500 mt-1">{formatDate(item.date)}</p>
-                        </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {item.type === 'version' && (
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {item.type === 'history' && (
+                              <>
+                                <button
+                                  onClick={() => { setEditingNoteId(`${item.recipeId}-${item.id}`); setNoteDraft(item.notes || ''); }}
+                                  className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
+                                  title="Edit notes"
+                                >
+                                  <PencilSimple size={18} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const historyEntry = (historyByRecipe[item.recipeId] || []).find(h => h.id === item.id);
+                                    if (historyEntry) handleSetHistoryDefault(item.recipeId, historyEntry);
+                                  }}
+                                  className={`p-2 rounded-lg transition-colors ${
+                                    isHistoryDefault
+                                      ? 'text-yellow-500 bg-yellow-50 hover:bg-yellow-100'
+                                      : 'text-stone-400 hover:text-yellow-500 hover:bg-stone-100'
+                                  }`}
+                                  title={isHistoryDefault ? 'Remove as default' : 'Set as default'}
+                                >
+                                  <Star size={18} weight={isHistoryDefault ? 'fill' : 'regular'} />
+                                </button>
+                              </>
+                            )}
+                            {item.type === 'version' && (
+                              <button
+                                onClick={() => handleSetDefault(item.recipeId, item.id)}
+                                className={`p-2 rounded-lg transition-colors ${
+                                  item.isDefault
+                                    ? 'text-yellow-500 bg-yellow-50 hover:bg-yellow-100'
+                                    : 'text-stone-400 hover:text-yellow-500 hover:bg-stone-100'
+                                }`}
+                                title={item.isDefault ? 'Remove as default' : 'Set as default version'}
+                              >
+                                <Star size={18} weight={item.isDefault ? 'fill' : 'regular'} />
+                              </button>
+                            )}
                             <button
-                              onClick={() => handleSetDefault(item.recipeId, item.id)}
-                              className={`p-2 rounded-lg transition-colors ${
-                                item.isDefault
-                                  ? 'text-yellow-500 bg-yellow-50 hover:bg-yellow-100'
-                                  : 'text-stone-400 hover:text-yellow-500 hover:bg-stone-100'
-                              }`}
-                              title={item.isDefault ? 'Remove as default' : 'Set as default version'}
+                              onClick={() =>
+                                item.type === 'version'
+                                  ? handleDeleteVersion(item.recipeId, item.id)
+                                  : handleDeleteHistory(item.recipeId, item.id)
+                              }
+                              className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title={`Delete ${item.type}`}
                             >
-                              <Star size={18} weight={item.isDefault ? 'fill' : 'regular'} />
+                              <Trash size={18} />
                             </button>
-                          )}
-                          <button
-                            onClick={() =>
-                              item.type === 'version'
-                                ? handleDeleteVersion(item.recipeId, item.id)
-                                : handleDeleteHistory(item.recipeId, item.id)
-                            }
-                            className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            title={`Delete ${item.type}`}
-                          >
-                            <Trash size={18} />
-                          </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
