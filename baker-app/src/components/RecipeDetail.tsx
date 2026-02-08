@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowCounterClockwise, CheckCircle, CaretDown, FloppyDisk } from '@phosphor-icons/react';
+import { ArrowCounterClockwise, CheckCircle, CaretDown } from '@phosphor-icons/react';
 import type { Recipe, Preferment, Ingredient } from '../types/recipe';
 import { calculateFlourWeight, calculateIngredientsWithPreferment } from '../utils/calculations';
-import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, loadRecipeHistory, saveToHistory, loadRecipeVersions, saveVersion, formatShortDate, type RecipeProgress, type ProductQuantity, type ScaleMode, type HistoryEntry, type VersionEntry, type BakingOverrides } from '../utils/localStorage';
+import { loadRecipeProgress, saveRecipeProgress, clearRecipeProgress, loadRecipeHistory, saveToHistory, loadRecipeVersions, formatShortDate, type RecipeProgress, type ProductQuantity, type ScaleMode, type HistoryEntry, type VersionEntry, type BakingOverrides } from '../utils/localStorage';
 import { doughProducts } from '../data/doughProducts';
 import ScalingCalculator from './ScalingCalculator';
 import PrefermentCalculator from './PrefermentCalculator';
@@ -11,6 +11,7 @@ import IngredientList from './IngredientList';
 import BakingInfo from './BakingInfo';
 import RecipeTree from './RecipeTree';
 import { getRecipeById } from '../data/recipeLoader';
+import BakingLog from './BakingLog';
 
 function formatSource(recipe: Recipe): string | null {
   if (recipe.source) return recipe.source;
@@ -27,6 +28,13 @@ function formatSource(recipe: Recipe): string | null {
 
 const defaultProductQuantities = (): ProductQuantity[] => 
   doughProducts.map(p => ({ productId: p.id, quantity: 0 }));
+
+function mergeProductQuantities(saved: ProductQuantity[]): ProductQuantity[] {
+  return doughProducts.map(p => {
+    const existing = saved.find(pq => pq.productId === p.id);
+    return existing ?? { productId: p.id, quantity: 0 };
+  });
+}
 
 export type PercentageOverrides = Record<string, number>;
 
@@ -48,8 +56,6 @@ export default function RecipeDetail() {
   const [versionEntries, setVersionEntries] = useState<VersionEntry[]>([]);
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [showVersionDropdown, setShowVersionDropdown] = useState(false);
-  const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
-  const [saveVersionFeedback, setSaveVersionFeedback] = useState<'saved' | 'duplicate' | null>(null);
 
   // Load saved progress from localStorage
   useEffect(() => {
@@ -61,7 +67,7 @@ export default function RecipeDetail() {
       setWholeWheatPercent(saved.wholeWheatPercent ?? null);
       setPreferment(saved.preferment ?? null);
       setDesiredTotalWeight(saved.desiredTotalWeight ?? null);
-      setProductQuantities(saved.productQuantities?.length ? saved.productQuantities : defaultProductQuantities());
+      setProductQuantities(saved.productQuantities?.length ? mergeProductQuantities(saved.productQuantities) : defaultProductQuantities());
       setScaleMode(saved.scaleMode || 'products');
       setGramsInput(saved.gramsInput || '');
       setManualInput(saved.manualInput || '');
@@ -134,31 +140,6 @@ export default function RecipeDetail() {
     setHistoryEntries(prev => [...prev, entry]);
   }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput, bakingOverrides]);
 
-  const handleSaveVersion = useCallback(() => {
-    if (!id) return;
-    const progress: RecipeProgress = {
-      completedSteps,
-      percentageOverrides,
-      wholeWheatPercent,
-      preferment,
-      desiredTotalWeight,
-      productQuantities,
-      scaleMode,
-      gramsInput,
-      manualInput,
-      bakingOverrides
-    };
-    const entry = saveVersion(id, progress);
-    if (entry) {
-      setVersionEntries(prev => [...prev, entry]);
-      setSaveVersionFeedback('saved');
-    } else {
-      setSaveVersionFeedback('duplicate');
-    }
-    // Clear feedback after 3 seconds
-    setTimeout(() => setSaveVersionFeedback(null), 3000);
-  }, [id, completedSteps, percentageOverrides, wholeWheatPercent, preferment, desiredTotalWeight, productQuantities, scaleMode, gramsInput, manualInput, bakingOverrides]);
-
   const handleLoadVersionEntry = useCallback((entry: VersionEntry) => {
     const { progress } = entry;
     setCompletedSteps(progress.completedSteps || []);
@@ -166,7 +147,7 @@ export default function RecipeDetail() {
     setWholeWheatPercent(progress.wholeWheatPercent ?? null);
     setPreferment(progress.preferment ?? null);
     setDesiredTotalWeight(progress.desiredTotalWeight ?? null);
-    setProductQuantities(progress.productQuantities?.length ? progress.productQuantities : defaultProductQuantities());
+    setProductQuantities(progress.productQuantities?.length ? mergeProductQuantities(progress.productQuantities) : defaultProductQuantities());
     setScaleMode(progress.scaleMode || 'products');
     setGramsInput(progress.gramsInput || '');
     setManualInput(progress.manualInput || '');
@@ -181,12 +162,11 @@ export default function RecipeDetail() {
     setWholeWheatPercent(progress.wholeWheatPercent ?? null);
     setPreferment(progress.preferment ?? null);
     setDesiredTotalWeight(progress.desiredTotalWeight ?? null);
-    setProductQuantities(progress.productQuantities?.length ? progress.productQuantities : defaultProductQuantities());
+    setProductQuantities(progress.productQuantities?.length ? mergeProductQuantities(progress.productQuantities) : defaultProductQuantities());
     setScaleMode(progress.scaleMode || 'products');
     setGramsInput(progress.gramsInput || '');
     setManualInput(progress.manualInput || '');
     setBakingOverrides(progress.bakingOverrides || {});
-    setShowHistoryDropdown(false);
   }, []);
 
   // Find the primary bread flour ingredient (first flour type, or one with 'bread' in name)
@@ -351,7 +331,7 @@ export default function RecipeDetail() {
           {versionEntries.length > 0 && (
             <div className="relative">
               <button
-                onClick={() => { setShowVersionDropdown(!showVersionDropdown); setShowHistoryDropdown(false); }}
+                onClick={() => setShowVersionDropdown(!showVersionDropdown)}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
               >
                 <span>Versions ({versionEntries.length})</span>
@@ -368,32 +348,6 @@ export default function RecipeDetail() {
                     >
                       <span className="font-medium">v{entry.version}</span>
                       <span className="text-stone-400 ml-2">{formatShortDate(entry.date)}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          
-          {historyEntries.length > 0 && (
-            <div className="relative">
-              <button
-                onClick={() => { setShowHistoryDropdown(!showHistoryDropdown); setShowVersionDropdown(false); }}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
-              >
-                <span>History ({historyEntries.length})</span>
-                <CaretDown size={14} className={`transition-transform ${showHistoryDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {showHistoryDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-stone-200 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
-                  {historyEntries.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry) => (
-                    <button
-                      key={entry.id}
-                      onClick={() => handleLoadHistoryEntry(entry)}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-stone-50 border-b border-stone-100 last:border-b-0"
-                    >
-                      <span className="text-stone-400">{formatShortDate(entry.date)}</span>
                     </button>
                   ))}
                 </div>
@@ -487,36 +441,22 @@ export default function RecipeDetail() {
       )}
 
       <div className="mt-10 pt-6 border-t border-stone-200">
-        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleMadeIt}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors"
           >
             <CheckCircle size={20} weight="bold" />
             Made it!
           </button>
-          <button
-            onClick={handleSaveVersion}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 font-medium rounded-lg transition-colors ${
-              saveVersionFeedback === 'saved'
-                ? 'bg-green-600 hover:bg-green-700 text-white'
-                : saveVersionFeedback === 'duplicate'
-                ? 'bg-stone-400 text-white'
-                : 'bg-stone-600 hover:bg-stone-700 text-white'
-            }`}
-          >
-            <FloppyDisk size={20} weight="bold" />
-            {saveVersionFeedback === 'saved'
-              ? 'Version Saved!'
-              : saveVersionFeedback === 'duplicate'
-              ? 'Already Exists'
-              : 'Save Version'}
-          </button>
-        </div>
-        <p className="mt-2 text-sm text-stone-400">
-          "Made it" records when you made this recipe. "Save Version" saves unique configurations.
-        </p>
       </div>
+
+      <BakingLog
+        recipeId={id!}
+        recipe={recipe}
+        entries={historyEntries}
+        onEntriesChange={setHistoryEntries}
+        onLoadEntry={handleLoadHistoryEntry}
+      />
     </div>
   );
 }

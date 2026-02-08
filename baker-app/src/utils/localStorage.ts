@@ -44,6 +44,7 @@ export interface HistoryEntry {
   id: number;
   date: string; // ISO string
   progress: RecipeProgress;
+  notes?: string;
 }
 
 export interface RecipeHistory {
@@ -203,6 +204,19 @@ export function deleteHistoryEntry(recipeId: string, entryId: number): void {
     const history = loadRecipeHistory(recipeId);
     history.entries = history.entries.filter(e => e.id !== entryId);
     localStorage.setItem(getHistoryKey(recipeId), JSON.stringify(history));
+  } catch {
+    // Storage unavailable - silently fail
+  }
+}
+
+export function updateHistoryEntryNotes(recipeId: string, entryId: number, notes: string): void {
+  try {
+    const history = loadRecipeHistory(recipeId);
+    const entry = history.entries.find(e => e.id === entryId);
+    if (entry) {
+      entry.notes = notes || undefined;
+      localStorage.setItem(getHistoryKey(recipeId), JSON.stringify(history));
+    }
   } catch {
     // Storage unavailable - silently fail
   }
