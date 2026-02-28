@@ -10,6 +10,7 @@ interface IngredientListProps {
   primaryFlourId: string | null;
   wholeWheatPercent: number | null;
   onWholeWheatChange: (percent: number | null) => void;
+  originalWholeWheatPercent?: number;
   prefermentTarget?: number;
   prefermentName?: string;
 }
@@ -22,6 +23,7 @@ export default function IngredientList({
   primaryFlourId,
   wholeWheatPercent,
   onWholeWheatChange,
+  originalWholeWheatPercent,
   prefermentTarget,
   prefermentName
 }: IngredientListProps) {
@@ -205,7 +207,10 @@ export default function IngredientList({
                       {wholeWheatPercent}%
                     </button>
                   )}
-                  <span>whole wheat substitution</span>
+                  <span>whole wheat</span>
+                  {originalWholeWheatPercent !== undefined && originalWholeWheatPercent !== wholeWheatPercent && (
+                    <span className="text-stone-400 ml-1">(recipe: {originalWholeWheatPercent}%)</span>
+                  )}
                 </div>
               )}
               
