@@ -158,43 +158,44 @@ export default function RecipeDetail() {
       percentage: percentageOverrides[ing.id] ?? ing.percentage
     }));
 
-    // Handle whole wheat substitution
+    // Handle whole wheat substitution — user's number IS the WW flour percentage
     if (wholeWheatPercent !== null && primaryFlourId) {
       const primaryFlour = ingredients.find(i => i.id === primaryFlourId);
       if (primaryFlour) {
-        const originalPercent = primaryFlour.percentage;
-        const wwAmount = (originalPercent * wholeWheatPercent) / 100;
-        const newBreadFlourPercent = originalPercent - wwAmount;
+        // Find existing whole wheat flour (recipe-native or synthetic)
+        const existingWW = ingredients.find(i =>
+          i.type === 'flour' &&
+          i.id !== primaryFlourId &&
+          !i.amountHint &&
+          i.name.toLowerCase().includes('whole wheat')
+        ) ?? ingredients.find(i => i.id === 'whole_wheat_sub');
 
-        // Check if whole wheat already exists
-        const existingWW = ingredients.find(i => i.id === 'whole_wheat_sub');
-        
         if (existingWW) {
-          // Update existing
+          // Replace existing WW percentage with user's choice; adjust primary flour to compensate
+          const delta = wholeWheatPercent - existingWW.percentage;
           ingredients = ingredients.map(ing => {
             if (ing.id === primaryFlourId) {
-              return { ...ing, percentage: newBreadFlourPercent };
+              return { ...ing, percentage: Math.max(0, ing.percentage - delta) };
             }
-            if (ing.id === 'whole_wheat_sub') {
-              return { ...ing, percentage: wwAmount };
+            if (ing.id === existingWW.id) {
+              return { ...ing, percentage: wholeWheatPercent };
             }
             return ing;
           });
         } else {
-          // Add new whole wheat and reduce bread flour
+          // No existing WW flour — create new whole_wheat_sub, reduce primary flour
           ingredients = ingredients.map(ing => {
             if (ing.id === primaryFlourId) {
-              return { ...ing, percentage: newBreadFlourPercent };
+              return { ...ing, percentage: Math.max(0, ing.percentage - wholeWheatPercent) };
             }
             return ing;
           });
           
-          // Insert whole wheat after primary flour
           const primaryIdx = ingredients.findIndex(i => i.id === primaryFlourId);
           const wwIngredient: Ingredient = {
             id: 'whole_wheat_sub',
             name: 'Whole wheat flour',
-            percentage: wwAmount,
+            percentage: wholeWheatPercent,
             type: 'flour'
           };
           ingredients.splice(primaryIdx + 1, 0, wwIngredient);
@@ -233,6 +234,15 @@ export default function RecipeDetail() {
     () => adjustedIngredients.find(i => i.isPreferment)?.name,
     [adjustedIngredients]
   );
+
+  // Original WW flour percentage from the recipe (before user substitution)
+  const originalWholeWheatPercent = useMemo(() => {
+    if (!recipe) return undefined;
+    const wwFlour = recipe.ingredients.find(i =>
+      i.type === 'flour' && !i.amountHint && i.name.toLowerCase().includes('whole wheat')
+    );
+    return wwFlour?.percentage;
+  }, [recipe]);
 
   const totalPercentage = useMemo(
     () => sumDoughPercentage(adjustedIngredients),
@@ -383,6 +393,7 @@ export default function RecipeDetail() {
             primaryFlourId={primaryFlourId}
             wholeWheatPercent={wholeWheatPercent}
             onWholeWheatChange={setWholeWheatPercent}
+            originalWholeWheatPercent={originalWholeWheatPercent}
             prefermentTarget={prefermentTarget > 0 ? prefermentTarget : undefined}
             prefermentName={prefermentName}
           />
